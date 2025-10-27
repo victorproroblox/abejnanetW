@@ -1,0 +1,203 @@
+/* ====== Tokens ====== */
+:root{
+  --bg-image: url("https://e1.pxfuel.com/desktop-wallpaper/141/820/desktop-wallpaper-beehive-bee-hive.jpg"); /* Opcional: cambia la ruta o elimina esta línea para color sólido */
+  --color-bg: #0b0b0c;        /* fondo base */
+  --glass: rgba(255, 255, 255, 0.10);
+  --glass-strong: rgba(255, 255, 255, 0.18);
+  --stroke: rgba(255,255,255,0.22);
+  --text: #f5f7fb;
+  --muted: #cfd6e6;
+  --accent: #ffd54a;          /* amarillo miel suave */
+  --accent-2: #ffb300;        /* acento más vivo */
+  --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  --radius-xl: 18px;
+  --radius-lg: 14px;
+  --blur: blur(12px);
+}
+
+*{ box-sizing: border-box; }
+html, body, #root{ height: 100%; }
+body{
+  margin: 0;
+  font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--color-bg) center/cover fixed;
+  background-image: var(--bg-image);
+}
+
+/* Fondo con overlay sutil para legibilidad */
+.dash-root{
+  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+}
+.dash-root::before{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(11,11,12,0.75), rgba(11,11,12,0.55));
+  z-index:-1;
+}
+
+/* ====== Topbar ====== */
+.topbar{
+  position: sticky; top: 0; z-index: 40;
+  height: 64px;
+  padding: 0 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: var(--blur);
+  background: linear-gradient(90deg, var(--glass), transparent);
+  border-bottom: 1px solid var(--stroke);
+}
+
+.brand{ display: flex; align-items: center; gap: 10px; }
+.brand img{ width: 36px; height: 36px; object-fit: contain; }
+.brand-name{
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+
+/* Botón de icono (abejita / close) */
+.icon-btn{
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  background: transparent; border: none; cursor: pointer;
+  border-radius: 10px;
+  color: var(--text);
+  transition: transform .15s ease, background .2s ease;
+}
+.icon-btn:hover{ background: var(--glass); }
+
+/* Usuario */
+.user-chip{
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px; border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+}
+.user-initials{
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700;
+  color: #1a1200; background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.user-mail{
+  font-size: 12px; color: var(--muted); max-width: 40vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ====== Drawer (menú lateral) ====== */
+.drawer{
+  position: fixed; inset: 0 auto 0 0; width: 290px; z-index: 50;
+  background: rgba(18,18,20,0.7);
+  backdrop-filter: var(--blur);
+  border-right: 1px solid var(--stroke);
+  transform: translateX(-105%);
+  transition: transform .28s ease;
+  display: flex; flex-direction: column;
+}
+.drawer-open .drawer{ transform: translateX(0); }
+
+.drawer-head{
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 16px;
+  border-bottom: 1px dashed var(--stroke);
+}
+.drawer-head img{ width: 34px; height: 34px; object-fit: contain; }
+
+.drawer-links{
+  list-style: none; margin: 0; padding: 10px 8px; flex: 1; overflow-y: auto;
+}
+.drawer-links li a{
+  display: block;
+  padding: 12px 14px;
+  margin: 6px 4px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text);
+  background: transparent;
+  outline: none;
+  border: 1px solid transparent;
+  transition: background .2s ease, border-color .2s ease, transform .06s ease;
+}
+.drawer-links li a:hover{
+  background: var(--glass);
+  border-color: var(--stroke);
+}
+.drawer-links li a.active{
+  background: linear-gradient(135deg, rgba(255,213,74,0.18), rgba(255,179,0,0.18));
+  border-color: rgba(255,179,0,0.45);
+  transform: translateY(-1px);
+}
+
+.drawer-footer{
+  padding: 14px 16px;
+  border-top: 1px dashed var(--stroke);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Overlay para cerrar el drawer en móvil */
+.overlay{
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(0,0,0,0.35);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+  border: none;
+}
+.drawer-open .overlay{
+  opacity: 1; pointer-events: auto;
+}
+
+/* ====== Contenido ====== */
+.content{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+/* Hero */
+.hero{
+  margin-top: 16px; margin-bottom: 18px;
+}
+.hero-card{
+  border-radius: var(--radius-xl);
+  padding: 22px 22px;
+  background: linear-gradient(180deg, var(--glass-strong), rgba(255,255,255,0.08));
+  border: 1px solid var(--stroke);
+  box-shadow: var(--shadow);
+}
+.hero-card h1{
+  margin: 0 0 6px 0; font-size: clamp(22px, 4vw, 28px);
+}
+.hero-card p{
+  margin: 0; color: var(--muted);
+}
+
+/* Grid de tarjetas */
+.cards-grid{
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 18px;
+}
+
+.card{
+  grid-column: span 12;
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--stroke);
+  box-shadow: var(--shadow);
+}
+
+.card h4{ margin: 0 0 10px 0; }
+.card h5{ margin: 12px 0 8px 0; }
+
+.card p, .card ul{ color: var(--muted); margin: 0; }
+
+.bullets{ padding-left: 18px; }
+
+/* Responsive */
+@media (min-width: 720px){
+  .card{ grid-column: span 6; }
+}
+@media (min-width: 1024px){
+  .card{ grid-column: span 4; }
+}
