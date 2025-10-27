@@ -1,23 +1,15 @@
-# Node
+# Node modules
 node_modules/
-npm-debug.log*
-pnpm-lock.yaml
-yarn.lock
+abejanet-backend/node_modules/
+abejanet-frontend/node_modules/
 
-# Build
+# Environment files
+*.env
+
+# Logs
+logs
+*.log
+
+# Build outputs
 dist/
 build/
-.tmp/
-
-# Env / keys
-.env
-*.env
-.env.*
-
-# Editor/OS
-.DS_Store
-.vscode/
-.idea/
-Thumbs.db
-
-abejanet-frontend.zip
