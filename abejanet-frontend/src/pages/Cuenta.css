@@ -400,9 +400,9 @@
   width: 100%;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid #d0d5dd;
+  border: 1px solid #f5c82e;
   font-size: 15px;
-  background: #ffffff;
+  background: #f5c82e;
   transition: all 0.2s ease;
 }
 
