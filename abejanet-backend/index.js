@@ -18,6 +18,9 @@ app.use("/api", colmenasRoutes);
 const usuariosRoutes = require("./routes/usuarios");
 app.use("/api", usuariosRoutes);
 
+// 📡 Rutas de sensores
+const sensoresRoutes = require("./routes/sensores");
+app.use("/api", sensoresRoutes);
 
 
 // ✅ Iniciar servidor
