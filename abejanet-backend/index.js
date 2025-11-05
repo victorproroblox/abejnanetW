@@ -14,9 +14,19 @@ app.use("/api", authRoutes);
 const colmenasRoutes = require("./routes/colmenas");
 app.use("/api", colmenasRoutes);
 
+<<<<<<< HEAD
 const lecturasRoutes = require("./routes/lecturas");
 app.use("/api", lecturasRoutes);
 
+=======
+// 🐝 Rutas de usuario
+const usuariosRoutes = require("./routes/usuarios");
+app.use("/api", usuariosRoutes);
+
+// 📡 Rutas de sensores
+const sensoresRoutes = require("./routes/sensores");
+app.use("/api", sensoresRoutes);
+>>>>>>> e4311252e280a20116879dfc7d14b5f59c95af76
 
 
 // ✅ Iniciar servidor

@@ -1,0 +1,100 @@
+/* ====== CONTENEDOR PRINCIPAL ====== */
+.cuenta-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  background: transparent;
+}
+
+/* ====== TARJETA PRINCIPAL ====== */
+.cuenta-card {
+  width: 90%;
+  max-width: 1200px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 30px;
+  padding: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+
+/* ====== BOTÓN REGRESAR ====== */
+.cuenta-back-icon {
+  font-size: 1.8rem;
+  color: var(--accent, #ffd54a);
+  cursor: pointer;
+  position: absolute;
+  top: 30px;
+  left: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cuenta-back-icon:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ====== TÍTULO ====== */
+.cuenta-nombre {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent, #ffd54a);
+  margin-bottom: 30px;
+}
+
+/* ====== TABLA ====== */
+.tabla-sensores {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  color: #fff;
+  margin-top: 20px;
+}
+
+.tabla-sensores thead {
+  background: rgba(255, 213, 74, 0.15);
+  color: var(--accent, #ffd54a);
+  border-bottom: 2px solid var(--accent, #ffd54a);
+}
+
+.tabla-sensores th,
+.tabla-sensores td {
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+}
+
+.tabla-sensores tr:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease;
+}
+
+/* ====== ESTADO VACÍO ====== */
+.cuenta-loading,
+.sensores-empty {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #ccc;
+  padding: 40px 0;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+  .cuenta-card {
+    padding: 24px;
+  }
+  .tabla-sensores th,
+  .tabla-sensores td {
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+}
