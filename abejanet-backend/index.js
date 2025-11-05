@@ -14,6 +14,9 @@ app.use("/api", authRoutes);
 const colmenasRoutes = require("./routes/colmenas");
 app.use("/api", colmenasRoutes);
 
+const lecturasRoutes = require("./routes/lecturas");
+app.use("/api", lecturasRoutes);
+
 
 
 // ✅ Iniciar servidor
