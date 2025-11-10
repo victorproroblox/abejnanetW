@@ -16,6 +16,9 @@ import {
   FaMapMarkerAlt,
   FaChartLine,
   FaBalanceScale,
+  FaThermometerHalf,
+  FaTint,
+  FaCloudRain,
 } from "react-icons/fa";
 import "./ColmenaDetallePage.css";
 import logo from "../assets/abeja_logo.png";
@@ -53,23 +56,51 @@ function InfoChip({ icon, title, value }) {
   );
 }
 
-function KpiCard({ label, value, delta, date }) {
+function MiniKpi({ icon, label, value, unit }) {
+  return (
+    <div className="mini-kpi">
+      <div className="mini-icon">{icon}</div>
+      <div className="mini-data">
+        <span className="mini-label">{label}</span>
+        <span className="mini-value">
+          {value !== null && value !== undefined ? `${value.toFixed(1)}${unit}` : "—"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function KpiCard({ peso, delta, temp, hum, lluvia, date }) {
   const cls = delta > 0 ? "delta positivo" : delta < 0 ? "delta negativo" : "delta neutro";
   const sign = delta > 0 ? "▲" : delta < 0 ? "▼" : "•";
   return (
-    <div className="kpi-card">
-      <div className="kpi-icon">
-        <FaWeight />
+    <div className="kpi-group">
+      <div className="kpi-card">
+        <div className="kpi-icon"><FaWeight /></div>
+        <div className="kpi-body">
+          <span className="kpi-label">Peso actual</span>
+          <span className="kpi-value">
+            {peso !== null && peso !== undefined ? `${peso.toFixed(2)} kg` : "—"}
+          </span>
+          <span className={cls}>
+            {delta !== null && delta !== undefined ? `${sign} ${Math.abs(delta).toFixed(2)} kg` : "—"}
+          </span>
+          {date && <span className="kpi-date">{date}</span>}
+        </div>
       </div>
-      <div className="kpi-body">
-        <span className="kpi-label">{label}</span>
-        <span className="kpi-value">
-          {value !== null && value !== undefined ? `${value.toFixed(2)} kg` : "—"}
-        </span>
-        <span className={cls}>
-          {delta !== null && delta !== undefined ? `${sign} ${Math.abs(delta).toFixed(2)} kg` : "—"}
-        </span>
-        {date && <span className="kpi-date">{date}</span>}
+
+      <div className="mini-kpi-row">
+        <MiniKpi icon={<FaThermometerHalf />} label="Temperatura" value={temp} unit="°C" />
+        <MiniKpi icon={<FaTint />} label="Humedad" value={hum} unit="%" />
+        <div className="mini-kpi">
+          <div className="mini-icon">{<FaCloudRain />}</div>
+          <div className="mini-data">
+            <span className="mini-label">Lluvia</span>
+            <span className="mini-value">
+              {lluvia === 1 ? "🌧️ Sí" : lluvia === 0 ? "☀️ No" : "—"}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -100,19 +131,18 @@ function ColmenaDetallePage() {
   const { id } = useParams();
   const location = useLocation();
 
-  // Drawer
   const [open, setOpen] = useState(false);
-
-  // Datos
   const [colmena, setColmena] = useState(null);
   const [lecturas, setLecturas] = useState([]);
   const [pesoActual, setPesoActual] = useState(null);
+  const [tempActual, setTempActual] = useState(null);
+  const [humActual, setHumActual] = useState(null);
+  const [lluviaActual, setLluviaActual] = useState(null);
   const [variacion, setVariacion] = useState(null);
   const [ultimaFecha, setUltimaFecha] = useState(null);
   const [fail, setFail] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Usuario (chip)
   const usuario = JSON.parse(localStorage.getItem("usuario"));
   const email = usuario?.correo_electronico || "Invitado";
   const initials = (email || "U").slice(0, 2).toUpperCase();
@@ -137,14 +167,17 @@ function ColmenaDetallePage() {
           temperatura: l.temperatura ? parseFloat(l.temperatura) : null,
           humedad: l.humedad ? parseFloat(l.humedad) : null,
           peso: l.peso ? parseFloat(l.peso) : null,
+          lluvia: l.lluvia ?? null,
         }));
 
         setLecturas(lecturasProcesadas);
-
         const ultima = lecturasProcesadas[0];
         const penultima = lecturasProcesadas[1];
 
         setPesoActual(ultima?.peso ?? null);
+        setTempActual(ultima?.temperatura ?? null);
+        setHumActual(ultima?.humedad ?? null);
+        setLluviaActual(ultima?.lluvia ?? null);
         setUltimaFecha(ultima?.fecha ?? null);
         if (ultima?.peso && penultima?.peso) {
           setVariacion(ultima.peso - penultima.peso);
@@ -152,10 +185,7 @@ function ColmenaDetallePage() {
           setVariacion(null);
         }
       })
-      .catch((err) => {
-        console.error("Error cargando detalles de colmena:", err);
-        setFail(true);
-      })
+      .catch(() => setFail(true))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -174,22 +204,15 @@ function ColmenaDetallePage() {
 
   return (
     <div className={`dash-root ${open ? "drawer-open" : ""}`}>
-      {/* ====== TOPBAR con menú ====== */}
+      {/* ====== TOPBAR ====== */}
       <header className="topbar">
-        <button
-          className="icon-btn"
-          aria-label={open ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-        >
+        <button className="icon-btn" onClick={() => setOpen(!open)}>
           {open ? <CloseIcon /> : <BeeIcon />}
         </button>
-
         <div className="brand">
           <img src={logo} alt="AbejaNet" />
           <span className="brand-name">AbejaNet</span>
         </div>
-
         <div className="user-chip" title={email}>
           <span className="user-initials">{initials}</span>
           <span className="user-mail">{email}</span>
@@ -197,7 +220,7 @@ function ColmenaDetallePage() {
       </header>
 
       {/* ====== DRAWER ====== */}
-      <aside className="drawer" role="navigation" aria-label="Menú principal">
+      <aside className="drawer">
         <div className="drawer-head">
           <img src={logo} alt="AbejaNet" />
           <strong>AbejaNet</strong>
@@ -220,13 +243,11 @@ function ColmenaDetallePage() {
         </div>
       </aside>
 
-      {/* Overlay */}
-      <button className="overlay" aria-label="Cerrar menú" onClick={() => setOpen(false)} />
+      <button className="overlay" onClick={() => setOpen(false)} />
 
       {/* ====== CONTENIDO ====== */}
       <main className="content">
         <div className="detalle-colmena-page">
-          {/* Breadcrumb / encabezado */}
           <div className="page-head">
             <div className="crumbs">
               <Link to="/colmenas" className="crumb-link">← Volver a Colmenas</Link>
@@ -237,79 +258,64 @@ function ColmenaDetallePage() {
             )}
           </div>
 
-          {/* Chips info */}
           <div className="info-grid">
             <InfoChip icon={<FaBalanceScale />} title="Colmena" value={colmena?.nombre} />
             <InfoChip icon={<FaMapMarkerAlt />} title="Apiario" value={colmena?.apiario} />
           </div>
 
-          {/* ====== SLAB NEGRO: KPI + GRÁFICAS ====== */}
           <div className="reading-slab">
-            {/* KPI de peso */}
             <KpiCard
-              label="Peso actual"
-              value={pesoActual}
+              peso={pesoActual}
               delta={variacion}
+              temp={tempActual}
+              hum={humActual}
+              lluvia={lluviaActual}
               date={ultimaFechaFmt}
             />
 
-            {/* Grillas de gráficas */}
             <div className="charts-grid">
               <Panel title="Temperatura" icon={<FaChartLine />}>
-                {lecturas.length ? (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={lecturas}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                      <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} domain={["auto","auto"]}/>
-                      <YAxis />
-                      <Tooltip labelFormatter={formatFecha} />
-                      <Legend />
-                      <Line type="monotone" dataKey="temperatura" stroke="#8ea6ff" name="Temperatura (°C)" dot={false} strokeWidth={2}/>
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyBox>Sin lecturas disponibles.</EmptyBox>
-                )}
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={lecturas}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                    <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} />
+                    <YAxis />
+                    <Tooltip labelFormatter={formatFecha} />
+                    <Legend />
+                    <Line type="monotone" dataKey="temperatura" stroke="#8ea6ff" name="Temperatura (°C)" dot={false} strokeWidth={2}/>
+                  </LineChart>
+                </ResponsiveContainer>
               </Panel>
 
               <Panel title="Humedad" icon={<FaChartLine />}>
-                {lecturas.length ? (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={lecturas}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                      <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} domain={["auto","auto"]}/>
-                      <YAxis />
-                      <Tooltip labelFormatter={formatFecha} />
-                      <Legend />
-                      <Line type="monotone" dataKey="humedad" stroke="#79d6b3" name="Humedad (%)" dot={false} strokeWidth={2}/>
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyBox>Sin lecturas disponibles.</EmptyBox>
-                )}
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={lecturas}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                    <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} />
+                    <YAxis />
+                    <Tooltip labelFormatter={formatFecha} />
+                    <Legend />
+                    <Line type="monotone" dataKey="humedad" stroke="#79d6b3" name="Humedad (%)" dot={false} strokeWidth={2}/>
+                  </LineChart>
+                </ResponsiveContainer>
               </Panel>
 
               <Panel title="Peso" icon={<FaChartLine />}>
-                {lecturas.length ? (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={lecturas}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                      <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} domain={["auto","auto"]}/>
-                      <YAxis />
-                      <Tooltip labelFormatter={formatFecha} />
-                      <Legend />
-                      <Line type="monotone" dataKey="peso" stroke="#ffc658" name="Peso (kg)" dot={false} strokeWidth={2}/>
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyBox>Sin lecturas disponibles.</EmptyBox>
-                )}
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={lecturas}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                    <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} />
+                    <YAxis />
+                    <Tooltip labelFormatter={formatFecha} />
+                    <Legend />
+                    <Line type="monotone" dataKey="peso" stroke="#ffc658" name="Peso (kg)" dot={false} strokeWidth={2}/>
+                  </LineChart>
+                </ResponsiveContainer>
               </Panel>
             </div>
           </div>
 
-          {/* Estados */}
-          {loading && <div className="loading-note">Cargando datos de la colmena…</div>}
+          {loading && <div className="loading-note">Cargando datos...</div>}
           {fail && (
             <div className="empty-box error">
               <h4>Ocurrió un problema</h4>

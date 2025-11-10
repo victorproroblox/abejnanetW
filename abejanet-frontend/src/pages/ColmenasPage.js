@@ -1,3 +1,4 @@
+// src/pages/ColmenasPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
@@ -45,12 +46,14 @@ function SkeletonCard() {
 }
 
 export default function ColmenasPage() {
-  const [open, setOpen] = useState(false); // estado del drawer
+  const [open, setOpen] = useState(false);
   const location = useLocation();
 
   const [colmenas, setColmenas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fail, setFail] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [errorDelete, setErrorDelete] = useState("");
 
   // Controles UI
   const [q, setQ] = useState("");
@@ -96,7 +99,6 @@ export default function ColmenasPage() {
   const filtered = useMemo(() => {
     let rows = [...colmenas];
 
-    // Filtro por búsqueda
     if (q.trim()) {
       const needle = q.toLowerCase();
       rows = rows.filter((c) => {
@@ -106,39 +108,46 @@ export default function ColmenasPage() {
         return n.includes(needle) || d.includes(needle) || a.includes(needle);
       });
     }
+    if (apiario !== "todos") rows = rows.filter((c) => (c.apiario || "") === apiario);
 
-    // Filtro por apiario
-    if (apiario !== "todos") {
-      rows = rows.filter((c) => (c.apiario || "") === apiario);
-    }
-
-    // Orden
     const compareStr = (a, b) =>
-      (a || "").toString().localeCompare((b || "").toString(), "es", {
-        sensitivity: "base",
-      });
+      (a || "").toString().localeCompare((b || "").toString(), "es", { sensitivity: "base" });
 
     switch (sort) {
-      case "nombre_asc":
-        rows.sort((a, b) => compareStr(a.nombre, b.nombre));
-        break;
-      case "nombre_desc":
-        rows.sort((a, b) => compareStr(b.nombre, a.nombre));
-        break;
-      case "apiario_asc":
-        rows.sort((a, b) => compareStr(a.apiario, b.apiario));
-        break;
-      case "apiario_desc":
-        rows.sort((a, b) => compareStr(b.apiario, a.apiario));
-        break;
-      default:
-        break;
+      case "nombre_asc": rows.sort((a, b) => compareStr(a.nombre, b.nombre)); break;
+      case "nombre_desc": rows.sort((a, b) => compareStr(b.nombre, a.nombre)); break;
+      case "apiario_asc": rows.sort((a, b) => compareStr(a.apiario, b.apiario)); break;
+      case "apiario_desc": rows.sort((a, b) => compareStr(b.apiario, a.apiario)); break;
+      default: break;
     }
 
     return rows;
   }, [colmenas, q, apiario, sort]);
 
   const closeOnRoute = () => setOpen(false);
+
+  /* ====== Eliminar colmena ====== */
+  const handleDelete = async (id, nombre) => {
+    setErrorDelete("");
+    const ok = window.confirm(`¿Eliminar la colmena "${nombre}"? Esta acción no se puede deshacer.`);
+    if (!ok) return;
+
+    // Optimista: quita del UI mientras elimina
+    const prev = colmenas;
+    setDeletingId(id);
+    setColmenas((xs) => xs.filter((c) => c.id !== id));
+
+    try {
+      const res = await axios.delete(`http://localhost:4000/api/colmenas/${id}`);
+      if (res.status !== 200) throw new Error("No se pudo eliminar");
+    } catch (e) {
+      // Revertir si falló
+      setColmenas(prev);
+      setErrorDelete(e?.response?.data?.error || e.message || "Error al eliminar");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className={`dash-root ${open ? "drawer-open" : ""}`}>
@@ -189,11 +198,7 @@ export default function ColmenasPage() {
       </aside>
 
       {/* Overlay para cerrar el drawer en mobile */}
-      <button
-        className="overlay"
-        aria-label="Cerrar menú"
-        onClick={() => setOpen(false)}
-      />
+      <button className="overlay" aria-label="Cerrar menú" onClick={() => setOpen(false)} />
 
       {/* ====== CONTENIDO DE LA PÁGINA ====== */}
       <main className="content">
@@ -202,15 +207,30 @@ export default function ColmenasPage() {
           <div className="page-head">
             <h2 className="titulo">🐝 Colmenas registradas</h2>
 
-            <div className="stats-row">
-              <StatChip label="Total" value={colmenas.length} />
-              <StatChip label="Mostrando" value={filtered.length} />
-              <StatChip
-                label="Apiarios"
-                value={apiarios.filter((a) => a !== "todos").length}
-              />
+            <div className="actions-row">
+              <div className="stats-row">
+                <StatChip label="Total" value={colmenas.length} />
+                <StatChip label="Mostrando" value={filtered.length} />
+                <StatChip
+                  label="Apiarios"
+                  value={apiarios.filter((a) => a !== "todos").length}
+                />
+              </div>
+
+              {/* Botón Crear colmena */}
+              <Link to="/colmenas/crear" className="btn-primary">
+                ➕ Crear colmena
+              </Link>
             </div>
           </div>
+
+          {/* Mensaje de error al eliminar */}
+          {errorDelete && (
+            <div className="empty-box error" style={{ marginBottom: 12 }}>
+              <h3>⚠️ No se pudo eliminar</h3>
+              <p>{errorDelete}</p>
+            </div>
+          )}
 
           {/* Controles */}
           <div className="toolbar">
@@ -228,10 +248,7 @@ export default function ColmenasPage() {
             <div className="selects">
               <label className="select">
                 <span>Apiario</span>
-                <select
-                  value={apiario}
-                  onChange={(e) => setApiario(e.target.value)}
-                >
+                <select value={apiario} onChange={(e) => setApiario(e.target.value)}>
                   {apiarios.map((a) => (
                     <option key={a} value={a}>
                       {a === "todos" ? "Todos" : a}
@@ -277,11 +294,7 @@ export default function ColmenasPage() {
           ) : (
             <div className="grid-colmenas">
               {filtered.map((colmena) => (
-                <Link
-                  to={`/colmena/${colmena.id}`}
-                  key={colmena.id}
-                  className="card-colmena"
-                >
+                <div key={colmena.id} className="card-colmena">
                   <div className="card-head">
                     <h3 className="colmena-nombre">{colmena.nombre}</h3>
                     <span className="badge-apiario" title="Apiario">
@@ -294,10 +307,22 @@ export default function ColmenasPage() {
                   </p>
 
                   <div className="card-foot">
-                    <span className="pill">Ver detalle</span>
-                    
+                    <Link to={`/colmena/${colmena.id}`} className="pill">
+                      Ver detalle
+                    </Link>
+                    <Link to={`/colmenas/editar/${colmena.id}`} className="pill edit">
+                      ✏️ Editar
+                    </Link>
+                    <button
+                      className="pill danger"
+                      onClick={() => handleDelete(colmena.id, colmena.nombre)}
+                      disabled={deletingId === colmena.id}
+                      title="Eliminar colmena"
+                    >
+                      {deletingId === colmena.id ? "Eliminando…" : "🗑️ Eliminar"}
+                    </button>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}

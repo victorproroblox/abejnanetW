@@ -157,37 +157,26 @@ body{
 .chip-value{ font-weight: 700; }
 @media(min-width: 720px){ .info-chip{ grid-column: span 6; } }
 
-/* ====== SLAB negro (KPI + gráficos) ====== */
+/* ====== SLAB gris oscuro (KPI + gráficos) ====== */
 .reading-slab{
   position: relative;
   margin-top: 12px;
-  padding: 16px;
+  padding: 18px 18px 20px;
   border-radius: 20px;
-  background: rgba(0,0,0,0.46);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: #1e1f23;             /* ← gris oscuro sólido */
+  border: 1px solid #2b2d33;
   box-shadow: 0 30px 80px rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
 }
 .reading-slab::before{
-  content: "";
-  position: absolute; inset: -1px;
-  border-radius: 21px;
-  background:
-    radial-gradient(120% 120% at 0% 0%, rgba(255,179,0,0.06), transparent 40%),
-    radial-gradient(120% 120% at 100% 100%, rgba(255,213,74,0.05), transparent 40%);
-  pointer-events: none;
+  content: none; /* sin resplandores ni difuminado */
 }
-/* Ajustes de elementos internos para armonizar sobre el slab */
 .reading-slab .panel{
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.14);
+  background: #23252b;
+  border-color: #333845;
 }
 .reading-slab .kpi-card{
-  background: rgba(255,198,88,0.10);
+  background: #24262c;
   border-color: rgba(255,179,0,0.35);
-}
-@media (min-width: 1024px){
-  .reading-slab{ padding: 18px 18px 20px; }
 }
 
 /* KPI Peso */
@@ -247,3 +236,48 @@ body{
 .empty-box h4{ margin: 0 0 6px; color: var(--text); }
 .empty-box.error{ border-color: rgba(255, 100, 100, 0.5); }
 .loading-note{ margin-top: 10px; color: var(--muted); font-size: 14px; }
+
+/* ===== KPIs secundarios ===== */
+.kpi-group { display: flex; flex-direction: column; gap: 12px; }
+
+.mini-kpi-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.mini-kpi {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.mini-icon {
+  font-size: 16px;
+  opacity: .85;
+}
+
+.mini-data {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.mini-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mini-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
