@@ -1,4 +1,3 @@
-// src/pages/ColmenaDetallePage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useParams, Link, useLocation } from "react-router-dom";
@@ -64,7 +63,7 @@ function MiniKpi({ icon, label, value, unit }) {
       <div className="mini-data">
         <span className="mini-label">{label}</span>
         <span className="mini-value">
-          {typeof value === "number" ? `${value.toFixed(1)}${unit}` : "—"}
+          {value !== null && value !== undefined ? `${value.toFixed(1)}${unit}` : "—"}
         </span>
       </div>
     </div>
@@ -81,10 +80,10 @@ function KpiCard({ peso, delta, temp, hum, lluvia, date }) {
         <div className="kpi-body">
           <span className="kpi-label">Peso actual</span>
           <span className="kpi-value">
-            {typeof peso === "number" ? `${peso.toFixed(2)} kg` : "—"}
+            {peso !== null && peso !== undefined ? `${peso.toFixed(2)} kg` : "—"}
           </span>
           <span className={cls}>
-            {typeof delta === "number" ? `${sign} ${Math.abs(delta).toFixed(2)} kg` : "—"}
+            {delta !== null && delta !== undefined ? `${sign} ${Math.abs(delta).toFixed(2)} kg` : "—"}
           </span>
           {date && <span className="kpi-date">{date}</span>}
         </div>
@@ -94,7 +93,7 @@ function KpiCard({ peso, delta, temp, hum, lluvia, date }) {
         <MiniKpi icon={<FaThermometerHalf />} label="Temperatura" value={temp} unit="°C" />
         <MiniKpi icon={<FaTint />} label="Humedad" value={hum} unit="%" />
         <div className="mini-kpi">
-          <div className="mini-icon"><FaCloudRain /></div>
+          <div className="mini-icon">{<FaCloudRain />}</div>
           <div className="mini-data">
             <span className="mini-label">Lluvia</span>
             <span className="mini-value">
@@ -128,14 +127,11 @@ function EmptyBox({ title = "Sin datos", children }) {
   );
 }
 
-export default function ColmenaDetallePage() {
+function ColmenaDetallePage() {
   const { id } = useParams();
   const location = useLocation();
 
-  // Drawer
   const [open, setOpen] = useState(false);
-
-  // Datos
   const [colmena, setColmena] = useState(null);
   const [lecturas, setLecturas] = useState([]);
   const [pesoActual, setPesoActual] = useState(null);
@@ -147,7 +143,6 @@ export default function ColmenaDetallePage() {
   const [fail, setFail] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Usuario (chip)
   const usuario = JSON.parse(localStorage.getItem("usuario"));
   const email = usuario?.correo_electronico || "Invitado";
   const initials = (email || "U").slice(0, 2).toUpperCase();
@@ -162,8 +157,6 @@ export default function ColmenaDetallePage() {
 
   useEffect(() => {
     setLoading(true);
-    setFail(false);
-
     axios
       .get(`http://localhost:4000/api/colmenas/${id}/detalle`)
       .then((res) => {
@@ -171,14 +164,13 @@ export default function ColmenaDetallePage() {
 
         const lecturasProcesadas = (res.data.lecturas || []).map((l) => ({
           fecha: new Date(l.fecha_registro).getTime(),
-          temperatura: l.temperatura != null ? parseFloat(l.temperatura) : null,
-          humedad: l.humedad != null ? parseFloat(l.humedad) : null,
-          peso: l.peso != null ? parseFloat(l.peso) : null,
+          temperatura: l.temperatura ? parseFloat(l.temperatura) : null,
+          humedad: l.humedad ? parseFloat(l.humedad) : null,
+          peso: l.peso ? parseFloat(l.peso) : null,
           lluvia: l.lluvia ?? null,
         }));
 
         setLecturas(lecturasProcesadas);
-
         const ultima = lecturasProcesadas[0];
         const penultima = lecturasProcesadas[1];
 
@@ -187,17 +179,13 @@ export default function ColmenaDetallePage() {
         setHumActual(ultima?.humedad ?? null);
         setLluviaActual(ultima?.lluvia ?? null);
         setUltimaFecha(ultima?.fecha ?? null);
-
-        if (typeof ultima?.peso === "number" && typeof penultima?.peso === "number") {
+        if (ultima?.peso && penultima?.peso) {
           setVariacion(ultima.peso - penultima.peso);
         } else {
           setVariacion(null);
         }
       })
-      .catch((err) => {
-        console.error("Error cargando detalles de colmena:", err);
-        setFail(true);
-      })
+      .catch(() => setFail(true))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -232,7 +220,7 @@ export default function ColmenaDetallePage() {
       </header>
 
       {/* ====== DRAWER ====== */}
-      <aside className="drawer" role="navigation" aria-label="Menú principal">
+      <aside className="drawer">
         <div className="drawer-head">
           <img src={logo} alt="AbejaNet" />
           <strong>AbejaNet</strong>
@@ -260,7 +248,6 @@ export default function ColmenaDetallePage() {
       {/* ====== CONTENIDO ====== */}
       <main className="content">
         <div className="detalle-colmena-page">
-          {/* Breadcrumb / encabezado */}
           <div className="page-head">
             <div className="crumbs">
               <Link to="/colmenas" className="crumb-link">← Volver a Colmenas</Link>
@@ -271,13 +258,11 @@ export default function ColmenaDetallePage() {
             )}
           </div>
 
-          {/* Chips info */}
           <div className="info-grid">
             <InfoChip icon={<FaBalanceScale />} title="Colmena" value={colmena?.nombre} />
             <InfoChip icon={<FaMapMarkerAlt />} title="Apiario" value={colmena?.apiario} />
           </div>
 
-          {/* SLAB: KPI + GRÁFICAS */}
           <div className="reading-slab">
             <KpiCard
               peso={pesoActual}
@@ -290,61 +275,49 @@ export default function ColmenaDetallePage() {
 
             <div className="charts-grid">
               <Panel title="Temperatura" icon={<FaChartLine />}>
-                {lecturas.length ? (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={lecturas}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                      <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} domain={["auto","auto"]}/>
-                      <YAxis />
-                      <Tooltip labelFormatter={formatFecha} />
-                      <Legend />
-                      <Line type="monotone" dataKey="temperatura" stroke="#8ea6ff" name="Temperatura (°C)" dot={false} strokeWidth={2}/>
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyBox>Sin lecturas disponibles.</EmptyBox>
-                )}
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={lecturas}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                    <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} />
+                    <YAxis />
+                    <Tooltip labelFormatter={formatFecha} />
+                    <Legend />
+                    <Line type="monotone" dataKey="temperatura" stroke="#8ea6ff" name="Temperatura (°C)" dot={false} strokeWidth={2}/>
+                  </LineChart>
+                </ResponsiveContainer>
               </Panel>
 
               <Panel title="Humedad" icon={<FaChartLine />}>
-                {lecturas.length ? (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={lecturas}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                      <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} domain={["auto","auto"]}/>
-                      <YAxis />
-                      <Tooltip labelFormatter={formatFecha} />
-                      <Legend />
-                      <Line type="monotone" dataKey="humedad" stroke="#79d6b3" name="Humedad (%)" dot={false} strokeWidth={2}/>
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyBox>Sin lecturas disponibles.</EmptyBox>
-                )}
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={lecturas}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                    <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} />
+                    <YAxis />
+                    <Tooltip labelFormatter={formatFecha} />
+                    <Legend />
+                    <Line type="monotone" dataKey="humedad" stroke="#79d6b3" name="Humedad (%)" dot={false} strokeWidth={2}/>
+                  </LineChart>
+                </ResponsiveContainer>
               </Panel>
 
               <Panel title="Peso" icon={<FaChartLine />}>
-                {lecturas.length ? (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={lecturas}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                      <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} domain={["auto","auto"]}/>
-                      <YAxis />
-                      <Tooltip labelFormatter={formatFecha} />
-                      <Legend />
-                      <Line type="monotone" dataKey="peso" stroke="#ffc658" name="Peso (kg)" dot={false} strokeWidth={2}/>
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyBox>Sin lecturas disponibles.</EmptyBox>
-                )}
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={lecturas}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                    <XAxis dataKey="fecha" type="number" tickFormatter={formatFecha} />
+                    <YAxis />
+                    <Tooltip labelFormatter={formatFecha} />
+                    <Legend />
+                    <Line type="monotone" dataKey="peso" stroke="#ffc658" name="Peso (kg)" dot={false} strokeWidth={2}/>
+                  </LineChart>
+                </ResponsiveContainer>
               </Panel>
             </div>
           </div>
 
-          {loading && <div className="loading-note">Cargando datos…</div>}
+          {loading && <div className="loading-note">Cargando datos...</div>}
           {fail && (
-            <div className="empty-box error" style={{ marginTop: 12 }}>
+            <div className="empty-box error">
               <h4>Ocurrió un problema</h4>
               <p>Verifica la API: <code>GET /api/colmenas/{id}/detalle</code></p>
             </div>
@@ -354,3 +327,5 @@ export default function ColmenaDetallePage() {
     </div>
   );
 }
+
+export default ColmenaDetallePage;
