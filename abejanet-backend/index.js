@@ -16,7 +16,6 @@ app.use("/api", colmenasRoutes);
 
 const lecturasRoutes = require("./routes/lecturas");
 app.use("/api", lecturasRoutes);
-
 // 🐝 Rutas de usuario
 const usuariosRoutes = require("./routes/usuarios");
 app.use("/api", usuariosRoutes);
