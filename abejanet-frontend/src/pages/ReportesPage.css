@@ -1,0 +1,104 @@
+/* src/pages/ReportesPage.css */
+.reportes-root { padding: 18px; color: #e8e8e8; }
+.reportes-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.reportes-title h1 { font-size: 28px; font-weight: 800; letter-spacing: .5px; }
+.actions { display: flex; gap: 8px; }
+.btn-primary, .btn-outline {
+  padding: 8px 12px; border-radius: 12px; border: 1px solid #444; background: #0f172a; cursor: pointer;
+}
+.btn-outline { background: transparent; }
+.btn-primary:hover, .btn-outline:hover { filter: brightness(1.2); }
+
+.filter-bar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; background: rgba(255,255,255,.04); padding: 12px; border-radius: 18px; margin-bottom: 16px; }
+.filter-bar label { display:block; font-size: 12px; opacity:.8; margin-bottom: 4px; }
+.filter-bar input, .filter-bar select { width:100%; background: #0b1020; border:1px solid #2a2a3a; color:#eaeaea; padding:8px 10px; border-radius:10px; }
+
+.kpi-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; margin-bottom: 16px; }
+.kpi-card { background: radial-gradient(1200px 400px at -10% -40%, rgba(255,200,0,.12), transparent), #0b1020; border:1px solid #232334; border-radius: 18px; padding:14px; }
+.kpi-header { display:flex; align-items:center; gap:8px; font-weight:700; opacity:.9; }
+.kpi-icon { font-size:18px; }
+.kpi-title { font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+.kpi-value { font-size:28px; font-weight:900; margin-top:6px; }
+.kpi-sub { font-size:12px; opacity:.7; }
+
+.grid-2 { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; margin-top: 12px; }
+.panel { background: rgba(255,255,255,.04); border: 1px solid #232334; border-radius:18px; padding:12px; }
+.panel-title { font-weight:800; margin-bottom:8px; }
+.table-wrap { max-height: 280px; overflow:auto; }
+table { width:100%; border-collapse: collapse; }
+thead th { position: sticky; top:0; background:#0b1020; }
+td, th { border-bottom: 1px solid #232334; padding:8px; font-size:14px; }
+.loader { padding: 24px; text-align:center; opacity:.8; }
+/* Mejor antialiasing para captura */
+.reportes-root canvas, 
+.reportes-root svg, 
+.reportes-root * {
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Fondo y paneles cuando se captura */
+.reportes-root .panel {
+  backdrop-filter: blur(4px);
+}
+
+/* Espaciado para que el header del PDF no tape nada */
+.reportes-title { margin-bottom: 8px; }
+
+/* === Botones: texto blanco y mejor contraste === */
+.btn-primary,
+.btn-outline {
+  color: #fff !important;          /* texto siempre blanco */
+  border: 1px solid rgba(255,255,255,.35);
+  transition: all .15s ease;
+}
+
+/* Primario (Aplicar / Exportar PDF si lo usas como primario) */
+.btn-primary {
+  background: #0f172a;             /* azul oscuro/gris pizarra */
+}
+.btn-primary:hover {
+  filter: brightness(1.15);
+}
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* Outline (Exportar CSVs) */
+.btn-outline {
+  background: transparent;
+}
+.btn-outline:hover {
+  background: rgba(255,255,255,.08);
+}
+.btn-outline:active {
+  transform: translateY(1px);
+}
+
+/* Accesibilidad: foco visible */
+.btn-primary:focus-visible,
+.btn-outline:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Estado deshabilitado coherente */
+button:disabled {
+  opacity: .6;
+  color: #fff !important;
+}
+
+/* Tabs */
+.tabs { display:flex; gap:.5rem; margin: 8px 0 16px; }
+.tab-btn {
+  padding: .5rem .9rem; border-radius: .75rem; border:1px solid var(--border, #2a2a3a);
+  background: transparent; color: var(--text, #e8e8e8); cursor:pointer;
+}
+.tab-btn.active { background: rgba(255,255,255,.10); }
+.tab-btn:hover { background: rgba(255,255,255,.08); }
+
+/* Botones claros sobre fondo oscuro */
+.btn-primary, .btn-outline {
+  color: #fff !important;
+}
+.btn-outline { border-color: rgba(255,255,255,.35) !important; }
+.btn-outline:hover { background: rgba(255,255,255,.08); }

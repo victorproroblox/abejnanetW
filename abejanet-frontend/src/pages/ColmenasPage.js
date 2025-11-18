@@ -1,31 +1,75 @@
-// src/pages/ColmenasPage.jsx
+
+// src/pages/ColmenasPage.js
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
 import "./ColmenasPage.css";
 import logo from "../assets/abeja_logo.png";
 
-/* ====== ICONOS MENÚ ====== */
-function BeeIcon(props){ 
+/* ICONOS MENÚ */
+function BeeIcon(props) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path d="M12 8.5c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4Z" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M6 6l3 3M18 6l-3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M12 4v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M5 13h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M7.5 18.5C9 20 10.5 20.5 12 20.5s3-.5 4.5-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      {...props}
+    >
+      <path
+        d="M12 8.5c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M6 6l3 3M18 6l-3 3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 4v3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 13h14"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7.5 18.5C9 20 10.5 20.5 12 20.5s3-.5 4.5-2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
-function CloseIcon(props){
+function CloseIcon(props) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      {...props}
+    >
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
-/* ====== SUBCOMPONENTES UI ====== */
+/* SUBCOMPONENTES */
 function StatChip({ label, value }) {
   return (
     <div className="stat-chip">
@@ -34,6 +78,7 @@ function StatChip({ label, value }) {
     </div>
   );
 }
+
 function SkeletonCard() {
   return (
     <div className="card-colmena skeleton">
@@ -45,27 +90,28 @@ function SkeletonCard() {
   );
 }
 
+/* PÁGINA */
 export default function ColmenasPage() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // drawer
   const location = useLocation();
 
   const [colmenas, setColmenas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fail, setFail] = useState(false);
+
   const [deletingId, setDeletingId] = useState(null);
   const [errorDelete, setErrorDelete] = useState("");
 
-  // Controles UI
+  // Controles
   const [q, setQ] = useState("");
   const [apiario, setApiario] = useState("todos");
   const [sort, setSort] = useState("nombre_asc");
 
-  // Datos de usuario (para chip)
-  const usuario = JSON.parse(localStorage.getItem("usuario"));
+  // Usuario chip
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
   const email = usuario?.correo_electronico || "Invitado";
   const initials = (email || "U").slice(0, 2).toUpperCase();
 
-  // Ítems del menú (mismos textos)
   const navItems = [
     { to: "/dashboard", label: "🏠 Inicio" },
     { to: "/colmenas", label: "🐝 Colmenas" },
@@ -99,6 +145,7 @@ export default function ColmenasPage() {
   const filtered = useMemo(() => {
     let rows = [...colmenas];
 
+    // búsqueda
     if (q.trim()) {
       const needle = q.toLowerCase();
       rows = rows.filter((c) => {
@@ -108,17 +155,33 @@ export default function ColmenasPage() {
         return n.includes(needle) || d.includes(needle) || a.includes(needle);
       });
     }
-    if (apiario !== "todos") rows = rows.filter((c) => (c.apiario || "") === apiario);
 
+    // filtro apiario
+    if (apiario !== "todos") {
+      rows = rows.filter((c) => (c.apiario || "") === apiario);
+    }
+
+    // orden
     const compareStr = (a, b) =>
-      (a || "").toString().localeCompare((b || "").toString(), "es", { sensitivity: "base" });
+      (a || "")
+        .toString()
+        .localeCompare((b || "").toString(), "es", { sensitivity: "base" });
 
     switch (sort) {
-      case "nombre_asc": rows.sort((a, b) => compareStr(a.nombre, b.nombre)); break;
-      case "nombre_desc": rows.sort((a, b) => compareStr(b.nombre, a.nombre)); break;
-      case "apiario_asc": rows.sort((a, b) => compareStr(a.apiario, b.apiario)); break;
-      case "apiario_desc": rows.sort((a, b) => compareStr(b.apiario, a.apiario)); break;
-      default: break;
+      case "nombre_asc":
+        rows.sort((a, b) => compareStr(a.nombre, b.nombre));
+        break;
+      case "nombre_desc":
+        rows.sort((a, b) => compareStr(b.nombre, a.nombre));
+        break;
+      case "apiario_asc":
+        rows.sort((a, b) => compareStr(a.apiario, b.apiario));
+        break;
+      case "apiario_desc":
+        rows.sort((a, b) => compareStr(b.apiario, a.apiario));
+        break;
+      default:
+        break;
     }
 
     return rows;
@@ -126,24 +189,28 @@ export default function ColmenasPage() {
 
   const closeOnRoute = () => setOpen(false);
 
-  /* ====== Eliminar colmena ====== */
+  /* Eliminar colmena */
   const handleDelete = async (id, nombre) => {
     setErrorDelete("");
-    const ok = window.confirm(`¿Eliminar la colmena "${nombre}"? Esta acción no se puede deshacer.`);
+    const ok = window.confirm(
+      `¿Eliminar la colmena "${nombre}"? Esta acción no se puede deshacer.`
+    );
     if (!ok) return;
 
-    // Optimista: quita del UI mientras elimina
     const prev = colmenas;
     setDeletingId(id);
     setColmenas((xs) => xs.filter((c) => c.id !== id));
 
     try {
-      const res = await axios.delete(`http://localhost:4000/api/colmenas/${id}`);
+      const res = await axios.delete(
+        `http://localhost:4000/api/colmenas/${id}`
+      );
       if (res.status !== 200) throw new Error("No se pudo eliminar");
     } catch (e) {
-      // Revertir si falló
       setColmenas(prev);
-      setErrorDelete(e?.response?.data?.error || e.message || "Error al eliminar");
+      setErrorDelete(
+        e?.response?.data?.error || e.message || "Error al eliminar"
+      );
     } finally {
       setDeletingId(null);
     }
@@ -151,7 +218,7 @@ export default function ColmenasPage() {
 
   return (
     <div className={`dash-root ${open ? "drawer-open" : ""}`}>
-      {/* ====== TOPBAR con menú ====== */}
+      {/* TOPBAR */}
       <header className="topbar">
         <button
           className="icon-btn"
@@ -173,7 +240,7 @@ export default function ColmenasPage() {
         </div>
       </header>
 
-      {/* ====== DRAWER (menú lateral) ====== */}
+      {/* DRAWER */}
       <aside className="drawer" role="navigation" aria-label="Menú principal">
         <div className="drawer-head">
           <img src={logo} alt="AbejaNet" />
@@ -197,13 +264,16 @@ export default function ColmenasPage() {
         </div>
       </aside>
 
-      {/* Overlay para cerrar el drawer en mobile */}
-      <button className="overlay" aria-label="Cerrar menú" onClick={() => setOpen(false)} />
+      {/* overlay */}
+      <button
+        className="overlay"
+        aria-label="Cerrar menú"
+        onClick={() => setOpen(false)}
+      />
 
-      {/* ====== CONTENIDO DE LA PÁGINA ====== */}
+      {/* CONTENIDO */}
       <main className="content">
         <div className="colmenas-container">
-          {/* Header */}
           <div className="page-head">
             <h2 className="titulo">🐝 Colmenas registradas</h2>
 
@@ -217,14 +287,12 @@ export default function ColmenasPage() {
                 />
               </div>
 
-              {/* Botón Crear colmena */}
               <Link to="/colmenas/crear" className="btn-primary">
                 ➕ Crear colmena
               </Link>
             </div>
           </div>
 
-          {/* Mensaje de error al eliminar */}
           {errorDelete && (
             <div className="empty-box error" style={{ marginBottom: 12 }}>
               <h3>⚠️ No se pudo eliminar</h3>
@@ -248,7 +316,10 @@ export default function ColmenasPage() {
             <div className="selects">
               <label className="select">
                 <span>Apiario</span>
-                <select value={apiario} onChange={(e) => setApiario(e.target.value)}>
+                <select
+                  value={apiario}
+                  onChange={(e) => setApiario(e.target.value)}
+                >
                   {apiarios.map((a) => (
                     <option key={a} value={a}>
                       {a === "todos" ? "Todos" : a}
@@ -259,7 +330,10 @@ export default function ColmenasPage() {
 
               <label className="select">
                 <span>Orden</span>
-                <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                >
                   <option value="nombre_asc">Nombre (A→Z)</option>
                   <option value="nombre_desc">Nombre (Z→A)</option>
                   <option value="apiario_asc">Apiario (A→Z)</option>
@@ -280,7 +354,8 @@ export default function ColmenasPage() {
             <div className="empty-box error">
               <h3>😕 No se pudieron cargar las colmenas</h3>
               <p>
-                Verifica tu API en <code>http://localhost:4000/api/colmenas</code>.
+                Verifica tu API en{" "}
+                <code>http://localhost:4000/api/colmenas</code>.
               </p>
             </div>
           ) : filtered.length === 0 ? (
@@ -310,16 +385,23 @@ export default function ColmenasPage() {
                     <Link to={`/colmena/${colmena.id}`} className="pill">
                       Ver detalle
                     </Link>
-                    <Link to={`/colmenas/editar/${colmena.id}`} className="pill edit">
+                    <Link
+                      to={`/colmenas/editar/${colmena.id}`}
+                      className="pill edit"
+                    >
                       ✏️ Editar
                     </Link>
                     <button
                       className="pill danger"
-                      onClick={() => handleDelete(colmena.id, colmena.nombre)}
+                      onClick={() =>
+                        handleDelete(colmena.id, colmena.nombre)
+                      }
                       disabled={deletingId === colmena.id}
                       title="Eliminar colmena"
                     >
-                      {deletingId === colmena.id ? "Eliminando…" : "🗑️ Eliminar"}
+                      {deletingId === colmena.id
+                        ? "Eliminando…"
+                        : "🗑️ Eliminar"}
                     </button>
                   </div>
                 </div>

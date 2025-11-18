@@ -6,13 +6,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 // 🔐 Rutas
+
+// 🔐 Rutas de autenticación
+
 const authRoutes = require("./routes/auth");
 app.use("/api", authRoutes);
 
 // 🐝 Rutas de colmenas
 const colmenasRoutes = require("./routes/colmenas");
 app.use("/api", colmenasRoutes);
+
 
 const lecturasRoutes = require("./routes/lecturas");
 app.use("/api", lecturasRoutes);
@@ -28,8 +33,19 @@ app.use("/api", sensoresRoutes);
 const apiariosRoutes = require("./routes/apiarios");
 app.use("/api", apiariosRoutes);
 
+// 📊 Rutas de reportes (nuevo)
+const reportesRouter = require("./routes/reportes");
+app.use("/api/reportes", reportesRouter);
+
+
 // ✅ Iniciar servidor
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
+
   console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
 });
+
+  
+
+
+

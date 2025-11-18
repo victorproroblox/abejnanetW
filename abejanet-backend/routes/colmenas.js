@@ -1,3 +1,4 @@
+// backend/routes/colmenas.js
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
@@ -8,7 +9,11 @@ const pool = require("../db");
 router.get("/colmenas", async (req, res) => {
   try {
     const [rows] = await pool.query(`
-      SELECT c.id, c.nombre, c.descripcion_especifica, a.nombre AS apiario
+      SELECT 
+        c.id,
+        c.nombre,
+        c.descripcion_especifica,
+        a.nombre AS apiario
       FROM colmenas c
       JOIN apiarios a ON c.apiario_id = a.id
       ORDER BY c.id DESC
@@ -30,7 +35,11 @@ router.get("/colmenas/:id/detalle", async (req, res) => {
     // 1) Info de colmena
     const [colmena] = await pool.query(
       `
-        SELECT c.id, c.nombre, c.descripcion_especifica, a.nombre AS apiario
+        SELECT 
+          c.id,
+          c.nombre,
+          c.descripcion_especifica,
+          a.nombre AS apiario
         FROM colmenas c
         JOIN apiarios a ON c.apiario_id = a.id
         WHERE c.id = ?
@@ -38,13 +47,18 @@ router.get("/colmenas/:id/detalle", async (req, res) => {
       [colmenaId]
     );
 
-    if (colmena.length === 0)
+    if (colmena.length === 0) {
       return res.status(404).json({ error: "Colmena no encontrada" });
+    }
 
     // 2) Sensores asignados
     const [sensores] = await pool.query(
       `
-        SELECT id, tipo_sensor, mac_address, estado
+        SELECT 
+          id,
+          tipo_sensor,
+          mac_address,
+          estado
         FROM sensores
         WHERE colmena_id = ?
       `,
@@ -54,7 +68,11 @@ router.get("/colmenas/:id/detalle", async (req, res) => {
     // 3) Lecturas ambientales (últimos 20 registros)
     const [lecturas] = await pool.query(
       `
-        SELECT l.fecha_registro, l.temperatura, l.humedad, l.peso
+        SELECT 
+          l.fecha_registro,
+          l.temperatura,
+          l.humedad,
+          l.peso
         FROM lecturas_ambientales l
         JOIN sensores s ON l.sensor_id = s.id
         WHERE s.colmena_id = ?
@@ -101,7 +119,11 @@ router.post("/colmenas", async (req, res) => {
         error: "Faltan campos requeridos: apiario_id y nombre",
       });
     }
-    if (typeof nombre !== "string" || nombre.length === 0 || nombre.length > 100) {
+    if (
+      typeof nombre !== "string" ||
+      nombre.length === 0 ||
+      nombre.length > 100
+    ) {
       return res
         .status(400)
         .json({ error: "El nombre debe ser texto (1–100 caracteres)" });
@@ -140,8 +162,13 @@ router.post("/colmenas", async (req, res) => {
     // Devolver fila creada
     const [row] = await pool.query(
       `
-        SELECT c.id, c.nombre, c.descripcion_especifica, c.fecha_creacion,
-               a.id AS apiario_id, a.nombre AS apiario
+        SELECT 
+          c.id,
+          c.nombre,
+          c.descripcion_especifica,
+          c.fecha_creacion,
+          a.id AS apiario_id,
+          a.nombre AS apiario
         FROM colmenas c
         JOIN apiarios a ON c.apiario_id = a.id
         WHERE c.id = ?
@@ -174,7 +201,10 @@ router.put("/colmenas/:id", async (req, res) => {
 
   try {
     // Verificar existencia de la colmena
-    const [exists] = await pool.query("SELECT id FROM colmenas WHERE id = ? LIMIT 1", [id]);
+    const [exists] = await pool.query(
+      "SELECT id FROM colmenas WHERE id = ? LIMIT 1",
+      [id]
+    );
     if (exists.length === 0) {
       return res.status(404).json({ error: "Colmena no encontrada" });
     }
@@ -186,15 +216,24 @@ router.put("/colmenas/:id", async (req, res) => {
 
     // Si viene apiario_id, validar que exista
     if (apiario_id !== undefined && apiario_id !== null) {
-      const [a] = await pool.query("SELECT id FROM apiarios WHERE id = ? LIMIT 1", [apiario_id]);
+      const [a] = await pool.query(
+        "SELECT id FROM apiarios WHERE id = ? LIMIT 1",
+        [apiario_id]
+      );
       if (a.length === 0) {
-        return res.status(400).json({ error: "apiario_id inválido (no existe)" });
+        return res
+          .status(400)
+          .json({ error: "apiario_id inválido (no existe)" });
       }
     }
 
     // Validar nombre si viene
     if (nombre !== undefined) {
-      if (typeof nombre !== "string" || nombre.length === 0 || nombre.length > 100) {
+      if (
+        typeof nombre !== "string" ||
+        nombre.length === 0 ||
+        nombre.length > 100
+      ) {
         return res
           .status(400)
           .json({ error: "El nombre debe ser texto (1–100 caracteres)" });
@@ -205,15 +244,23 @@ router.put("/colmenas/:id", async (req, res) => {
     const fields = [];
     const params = [];
 
-    if (apiario_id !== undefined) { fields.push("apiario_id = ?"); params.push(apiario_id); }
-    if (nombre !== undefined) { fields.push("nombre = ?"); params.push(nombre); }
+    if (apiario_id !== undefined) {
+      fields.push("apiario_id = ?");
+      params.push(apiario_id);
+    }
+    if (nombre !== undefined) {
+      fields.push("nombre = ?");
+      params.push(nombre);
+    }
     if (descripcion_especifica !== undefined) {
       fields.push("descripcion_especifica = ?");
       params.push(descripcion_especifica || null);
     }
 
     if (fields.length === 0) {
-      return res.status(400).json({ error: "No se recibió ningún campo para actualizar" });
+      return res
+        .status(400)
+        .json({ error: "No se recibió ningún campo para actualizar" });
     }
 
     params.push(id);
@@ -230,7 +277,9 @@ router.put("/colmenas/:id", async (req, res) => {
     } catch (e) {
       // Capturar UNIQUE de nombre duplicado contra otra colmena
       if (e && (e.code === "ER_DUP_ENTRY" || e.errno === 1062)) {
-        return res.status(409).json({ error: "El nombre de la colmena ya está en uso" });
+        return res
+          .status(409)
+          .json({ error: "El nombre de la colmena ya está en uso" });
       }
       throw e;
     }
@@ -238,8 +287,13 @@ router.put("/colmenas/:id", async (req, res) => {
     // Devolver fila actualizada (con nombre de apiario)
     const [row] = await pool.query(
       `
-        SELECT c.id, c.nombre, c.descripcion_especifica, c.fecha_creacion,
-               a.id AS apiario_id, a.nombre AS apiario
+        SELECT 
+          c.id,
+          c.nombre,
+          c.descripcion_especifica,
+          c.fecha_creacion,
+          a.id AS apiario_id,
+          a.nombre AS apiario
         FROM colmenas c
         JOIN apiarios a ON c.apiario_id = a.id
         WHERE c.id = ?
@@ -264,12 +318,17 @@ router.put("/colmenas/:id", async (req, res) => {
  */
 router.delete("/colmenas/:id", async (req, res) => {
   const { id } = req.params;
-  const force = String(req.query.force || "").toLowerCase() === "1" || String(req.query.force || "").toLowerCase() === "true";
+  const force =
+    String(req.query.force || "").toLowerCase() === "1" ||
+    String(req.query.force || "").toLowerCase() === "true";
 
   const conn = await pool.getConnection();
   try {
     // Verificar existencia
-    const [exists] = await conn.query("SELECT id FROM colmenas WHERE id = ? LIMIT 1", [id]);
+    const [exists] = await conn.query(
+      "SELECT id FROM colmenas WHERE id = ? LIMIT 1",
+      [id]
+    );
     if (exists.length === 0) {
       conn.release();
       return res.status(404).json({ error: "Colmena no encontrada" });
@@ -298,12 +357,14 @@ router.delete("/colmenas/:id", async (req, res) => {
         return res.status(409).json({
           error: "No se puede eliminar: la colmena tiene dependencias",
           detalles: { sensores: sensores_count, lecturas: lecturas_count },
-          hint: "Usa ?force=1 para eliminar en cascada (lecturas, sensores y colmena)."
+          hint: "Usa ?force=1 para eliminar en cascada (lecturas, sensores y colmena).",
         });
       }
 
       // Sin dependencias: borrar directo
-      const [del] = await conn.query("DELETE FROM colmenas WHERE id = ?", [id]);
+      const [del] = await conn.query("DELETE FROM colmenas WHERE id = ?", [
+        id,
+      ]);
       conn.release();
       return res.json({ ok: true, deleted: del.affectedRows, id });
     }
@@ -325,7 +386,10 @@ router.delete("/colmenas/:id", async (req, res) => {
     await conn.query("DELETE FROM sensores WHERE colmena_id = ?", [id]);
 
     // 3) Eliminar la colmena
-    const [delColmena] = await conn.query("DELETE FROM colmenas WHERE id = ?", [id]);
+    const [delColmena] = await conn.query(
+      "DELETE FROM colmenas WHERE id = ?",
+      [id]
+    );
 
     await conn.commit();
     conn.release();
@@ -334,18 +398,21 @@ router.delete("/colmenas/:id", async (req, res) => {
       ok: true,
       forced: true,
       deleted: delColmena.affectedRows,
-      id
+      id,
     });
-
   } catch (err) {
-    try { await conn.rollback(); } catch (e) {}
+    try {
+      await conn.rollback();
+    } catch (e) {}
     conn.release();
     console.error("Error al eliminar colmena:", err.message);
     return res.status(500).json({ error: "Error del servidor" });
   }
 });
 
-// GET /colmenas/:id  -> para prellenar el formulario de edición
+/* ===========================
+   GET /colmenas/:id  (para edición)
+=========================== */
 router.get("/colmenas/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -375,6 +442,5 @@ router.get("/colmenas/:id", async (req, res) => {
     res.status(500).json({ error: "Error del servidor" });
   }
 });
-
 
 module.exports = router;

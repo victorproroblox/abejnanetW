@@ -208,6 +208,7 @@
   .card-colmena{ grid-column: span 4; }
 }
 
+
 /* Botón primario "Crear colmena" */
 .actions-row{
   display: flex;
@@ -282,3 +283,4 @@
 }
 .pill.danger:hover { background: rgba(255,100,100,0.18); }
 .pill:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+
