@@ -210,8 +210,8 @@ export default function ReportesPage() {
   // ======= CARGAS =======
   const cargarCatalogos = async () => {
     const [a, c] = await Promise.all([
-      fetchBase("/api/reportes/apiarios"),
-      fetchBase("/api/reportes/colmenas"),
+      fetchBase("https://abejanet-backend-cplf.onrender.com/api/reportes/apiarios"),
+      fetchBase("https://abejanet-backend-cplf.onrender.com/api/reportes/colmenas"),
     ]);
     setApiarios(a);
     setColmenas(c);
