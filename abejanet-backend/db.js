@@ -1,36 +1,31 @@
 // backend/db.js
-const mysql = require("mysql2/promise");
+const { Pool } = require("pg");
 require("dotenv").config();
 
-// Solo para revisar que .env sí se está leyendo (si quieres, puedes comentar esto)
+// (En producción es mejor NO loguear credenciales, puedes comentar esto)
 console.log("DB_HOST:", process.env.DB_HOST);
 console.log("DB_USER:", process.env.DB_USER);
 console.log("DB_NAME:", process.env.DB_NAME);
 
-const pool = mysql.createPool({
+const pool = new Pool({
   host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 5432,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 
-  // buenas prácticas de pool
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-
-  // cómo devuelve datos
-  dateStrings: true,      // DATE/DATETIME como string (evita pedos de zona horaria)
-  decimalNumbers: true,   // DECIMAL como number
-  namedPlaceholders: true // si usas :param en queries
-  // timezone: "Z",       // si quieres forzar UTC, si no, déjalo comentado
+  // opciones del pool
+  max: 10,                 // conexiones máximas
+  idleTimeoutMillis: 30000, // tiempo máxima inactiva
+  connectionTimeoutMillis: 2000, // timeout al conectar
 });
 
-// Test de conexión (opcional, pero chido para ver que jala)
+// Test de conexión
 pool
-  .getConnection()
-  .then((conn) => {
+  .connect()
+  .then((client) => {
     console.log("✅ Conectado correctamente a la base de datos:", process.env.DB_NAME);
-    conn.release();
+    client.release();
   })
   .catch((err) => {
     console.error("❌ Error de conexión:", err.message);
@@ -40,7 +35,7 @@ pool
 const shutdown = async () => {
   try {
     await pool.end();
-    console.log("👋 Pool MySQL cerrado.");
+    console.log("👋 Pool PostgreSQL cerrado.");
   } catch (e) {
     console.error("Error cerrando pool:", e.message);
   } finally {
@@ -52,5 +47,3 @@ process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
 module.exports = pool;
-
-
