@@ -6,11 +6,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
-// 🔐 Rutas
+/* ===========================
+   Health-check (para UptimeRobot / Render)
+=========================== */
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    message: "AbejaNet backend funcionando 🐝",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // 🔐 Rutas de autenticación
-
 const authRoutes = require("./routes/auth");
 app.use("/api", authRoutes);
 
@@ -18,10 +25,11 @@ app.use("/api", authRoutes);
 const colmenasRoutes = require("./routes/colmenas");
 app.use("/api", colmenasRoutes);
 
-
+// 📈 Rutas de lecturas
 const lecturasRoutes = require("./routes/lecturas");
 app.use("/api", lecturasRoutes);
-// 🐝 Rutas de usuario
+
+// 👤 Rutas de usuario
 const usuariosRoutes = require("./routes/usuarios");
 app.use("/api", usuariosRoutes);
 
@@ -29,23 +37,16 @@ app.use("/api", usuariosRoutes);
 const sensoresRoutes = require("./routes/sensores");
 app.use("/api", sensoresRoutes);
 
-// 📡 Rutas de sensores
+// 📍 Rutas de apiarios
 const apiariosRoutes = require("./routes/apiarios");
 app.use("/api", apiariosRoutes);
 
-// 📊 Rutas de reportes (nuevo)
+// 📊 Rutas de reportes
 const reportesRouter = require("./routes/reportes");
 app.use("/api/reportes", reportesRouter);
-
 
 // ✅ Iniciar servidor
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-
   console.log(`Servidor backend escuchando en el puerto:${PORT}`);
 });
-
-  
-
-
-
