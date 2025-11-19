@@ -17,10 +17,12 @@ router.post("/login", async (req, res) => {
     // );
 
     // Opción 2 (si esta_activo es INT 0/1, similar a MySQL):
+    // routes/auth.js (o donde tengas el login)
     const result = await pool.query(
-      "SELECT * FROM usuarios WHERE correo_electronico = $1 AND esta_activo = 1",
+      "SELECT * FROM usuarios WHERE correo_electronico = $1 AND esta_activo = true",
       [correo_electronico]
     );
+
 
     const rows = result.rows;
 
