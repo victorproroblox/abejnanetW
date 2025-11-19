@@ -15,7 +15,7 @@ export default function CreateColmenaPage() {
 
   // Cargar apiarios al iniciar
   useEffect(() => {
-    fetch("http://localhost:4000/api/apiarios")
+    fetch("https://abejanet-backend-cplf.onrender.com/api/apiarios")
       .then((r) => r.json())
       .then((data) => setApiarios(data || []))
       .catch(() => setApiarios([]));
@@ -40,7 +40,7 @@ export default function CreateColmenaPage() {
 
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:4000/api/colmenas", {
+      const res = await fetch("https://abejanet-backend-cplf.onrender.com/api/colmenas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

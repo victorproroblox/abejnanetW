@@ -11,7 +11,7 @@ export default function Cuenta() {
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("usuario"));
     if (userData?.correo_electronico) {
-      fetch(`http://localhost:4000/api/usuarios/${userData.correo_electronico}`)
+      fetch(`https://abejanet-backend-cplf.onrender.com/api/usuarios/${userData.correo_electronico}`)
         .then(res => res.json())
         .then(data => {
           setUsuario(data);
@@ -30,7 +30,7 @@ export default function Cuenta() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const guardarCambios = () => {
-    fetch(`http://localhost:4000/api/usuarios/${usuario.id}`, {
+    fetch(`https://abejanet-backend-cplf.onrender.com/api/usuarios/${usuario.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),

@@ -124,7 +124,7 @@ export default function ColmenasPage() {
     const cargarColmenas = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://localhost:4000/api/colmenas");
+        const res = await axios.get("https://abejanet-backend-cplf.onrender.com/api/colmenas");
         setColmenas(res.data || []);
       } catch (error) {
         console.error("Error al cargar colmenas:", error);
@@ -203,7 +203,7 @@ export default function ColmenasPage() {
 
     try {
       const res = await axios.delete(
-        `http://localhost:4000/api/colmenas/${id}`
+        `https://abejanet-backend-cplf.onrender.com/api/colmenas/${id}`
       );
       if (res.status !== 200) throw new Error("No se pudo eliminar");
     } catch (e) {
@@ -355,7 +355,7 @@ export default function ColmenasPage() {
               <h3>😕 No se pudieron cargar las colmenas</h3>
               <p>
                 Verifica tu API en{" "}
-                <code>http://localhost:4000/api/colmenas</code>.
+                <code>https://abejanet-backend-cplf.onrender.com/api/colmenas</code>.
               </p>
             </div>
           ) : filtered.length === 0 ? (

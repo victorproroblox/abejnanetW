@@ -45,8 +45,8 @@ export default function EditColmenaPage() {
     };
 
     Promise.all([
-      fetchJsonSafe("http://localhost:4000/api/apiarios").catch(() => []),
-      fetchJsonSafe(`http://localhost:4000/api/colmenas/${id}`),
+      fetchJsonSafe("https://abejanet-backend-cplf.onrender.com/api/apiarios").catch(() => []),
+      fetchJsonSafe(`https://abejanet-backend-cplf.onrender.com/api/colmenas/${id}`),
     ])
       .then(([apiariosResp, colmena]) => {
         if (!alive) return;
@@ -91,7 +91,7 @@ export default function EditColmenaPage() {
 
     try {
       setSaving(true);
-      const res = await fetch(`http://localhost:4000/api/colmenas/${id}`, {
+      const res = await fetch(`https://abejanet-backend-cplf.onrender.com/api/colmenas/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

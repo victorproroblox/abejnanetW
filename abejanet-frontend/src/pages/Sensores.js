@@ -37,7 +37,7 @@ export default function Sensores() {
     // ---- FIN DE LA MODIFICACIÓN ----
 
     setLoading(true); // Mostramos loading en cada recarga
-    return fetch(`http://localhost:4000/api/sensores?${queryString}`) // <-- URL con filtros
+    return fetch(`https://abejanet-backend-cplf.onrender.com/api/sensores?${queryString}`) // <-- URL con filtros
       .then((res) => res.json())
       .then((data) => {
         setSensores(data);
@@ -53,7 +53,7 @@ export default function Sensores() {
 
   // 🔹 Cargar colmenas (para los dropdowns)
   const cargarColmenas = () => {
-    return fetch("http://localhost:4000/api/colmenas")
+    return fetch("https://abejanet-backend-cplf.onrender.com/api/colmenas")
       .then((res) => res.json())
       .then((data) => {
         setColmenas(data);
@@ -102,8 +102,8 @@ export default function Sensores() {
 
     const method = editing ? "PUT" : "POST";
     const url = editing
-      ? `http://localhost:4000/api/sensores/${editing}`
-      : "http://localhost:4000/api/sensores";
+      ? `https://abejanet-backend-cplf.onrender.com/api/sensores/${editing}`
+      : "https://abejanet-backend-cplf.onrender.com/api/sensores";
 
     fetch(url, {
       method,
@@ -145,7 +145,7 @@ export default function Sensores() {
   // 🔹 Eliminar sensor
   const handleDelete = (id) => {
     if (window.confirm("¿Seguro que deseas eliminar este sensor?")) {
-      fetch(`http://localhost:4000/api/sensores/${id}`, { method: "DELETE" })
+      fetch(`https://abejanet-backend-cplf.onrender.com/api/sensores/${id}`, { method: "DELETE" })
         .then((res) => res.json())
         .then(() => cargarSensores()) // Recarga los sensores (respetando filtros)
         .catch((err) => console.error("Error al eliminar sensor:", err));

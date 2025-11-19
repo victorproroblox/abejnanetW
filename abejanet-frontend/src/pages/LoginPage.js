@@ -26,7 +26,7 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:4000/api/login", {
+      const res = await axios.post("https://abejanet-backend-cplf.onrender.com/api/login", {
         correo_electronico: correo,
         contrasena,
       });

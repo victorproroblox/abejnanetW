@@ -228,7 +228,7 @@ export default function ColmenaDetallePage() {
     setFail(false);
 
     axios
-      .get(`http://localhost:4000/api/colmenas/${id}/detalle`)
+      .get(`https://abejanet-backend-cplf.onrender.com/api/colmenas/${id}/detalle`)
       .then((res) => {
         setColmena(res.data.colmena);
 
