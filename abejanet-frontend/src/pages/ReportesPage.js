@@ -226,10 +226,10 @@ export default function ReportesPage() {
     }).toString();
 
     const [resumen, peso, amb] = await Promise.all([
-      fetchBase(`/api/reportes/resumen?${qs}`),
-      fetchBase(`/api/reportes/serie-peso?${qs}`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/resumen?${qs}`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/serie-peso?${qs}`),
       // tienes implementado serie-ambiente/top-variacion/eventos en tu versión anterior; si no, no rompen
-      fetchBase(`/api/reportes/serie-ambiente?${qs}`).catch(() => []),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/serie-ambiente?${qs}`).catch(() => []),
     ]);
 
     setKpis(resumen);
@@ -243,9 +243,9 @@ export default function ReportesPage() {
   const cargarUsuarios = async () => {
     const qs = new URLSearchParams({ desde: filtros.desde, hasta: filtros.hasta }).toString();
     const [r, m, l] = await Promise.all([
-      fetchBase(`/api/reportes/usuarios/resumen?${qs}`),
-      fetchBase(`/api/reportes/usuarios/crecimiento?${qs}`),
-      fetchBase(`/api/reportes/usuarios/listado`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/usuarios/resumen?${qs}`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/usuarios/crecimiento?${qs}`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/usuarios/listado`),
     ]);
     setUsrResumen(r);
     setUsrCrec(m);
@@ -254,8 +254,8 @@ export default function ReportesPage() {
 
   const cargarColmenasAdmin = async () => {
     const [r, p] = await Promise.all([
-      fetchBase(`/api/reportes/colmenas/resumen`),
-      fetchBase(`/api/reportes/colmenas/por-apiario`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/colmenas/resumen`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/colmenas/por-apiario`),
     ]);
     setColmResumen(r);
     setColmPorApiario(p);
@@ -265,8 +265,8 @@ export default function ReportesPage() {
   const cargarApiariosAdmin = async () => {
     const qs = new URLSearchParams({ desde: filtros.desde, hasta: filtros.hasta }).toString();
     const [r, t] = await Promise.all([
-      fetchBase(`/api/reportes/apiarios/resumen-admin`),
-      fetchBase(`/api/reportes/apiarios/top-actividad?${qs}`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/apiarios/resumen-admin`),
+      fetchBase(`https://abejanet-backend-cplf.onrender.com/api/reportes/apiarios/top-actividad?${qs}`),
     ]);
     setApiResumen(r);
     setApiTopAct(t);
