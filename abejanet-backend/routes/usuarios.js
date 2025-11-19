@@ -8,15 +8,16 @@ router.get("/usuarios/:correo", async (req, res) => {
   const { correo } = req.params;
 
   try {
-    const [results] = await pool.query(
-      "SELECT * FROM usuarios WHERE correo_electronico = ?",
+    const result = await pool.query(
+      "SELECT * FROM usuarios WHERE correo_electronico = $1",
       [correo]
     );
 
-    if (results.length === 0)
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
+    }
 
-    res.json(results[0]);
+    res.json(result.rows[0]);
   } catch (err) {
     console.error("Error al obtener usuario:", err.message);
     res.status(500).json({ error: "Error del servidor" });
@@ -30,20 +31,29 @@ router.put("/usuarios/:id", async (req, res) => {
     req.body;
 
   try {
-    const [result] = await pool.query(
-      `UPDATE usuarios 
-       SET nombre = ?, apellido_paterno = ?, apellido_materno = ?, correo_electronico = ?
-       WHERE id = ?`,
+    const result = await pool.query(
+      `
+      UPDATE usuarios 
+      SET nombre = $1,
+          apellido_paterno = $2,
+          apellido_materno = $3,
+          correo_electronico = $4
+      WHERE id = $5
+      `,
       [nombre, apellido_paterno, apellido_materno, correo_electronico, id]
     );
 
-    if (result.affectedRows === 0)
+    if (result.rowCount === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
+    }
 
     // 🔄 Devolver usuario actualizado
-    const [updatedUser] = await pool.query("SELECT * FROM usuarios WHERE id = ?", [id]);
+    const updatedResult = await pool.query(
+      "SELECT * FROM usuarios WHERE id = $1",
+      [id]
+    );
 
-    res.json(updatedUser[0]);
+    res.json(updatedResult.rows[0]);
   } catch (err) {
     console.error("Error al actualizar usuario:", err.message);
     res.status(500).json({ error: "Error del servidor" });
@@ -51,4 +61,3 @@ router.put("/usuarios/:id", async (req, res) => {
 });
 
 module.exports = router;
-

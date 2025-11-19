@@ -9,18 +9,31 @@ router.post("/login", async (req, res) => {
   const { correo_electronico, contrasena } = req.body;
 
   try {
-    const [rows] = await pool.query(
-      "SELECT * FROM usuarios WHERE correo_electronico = ? AND esta_activo = 1",
+    // En Postgres usamos $1 como placeholder
+    // Opción 1 (si esta_activo es BOOLEAN):
+    // const result = await pool.query(
+    //   "SELECT * FROM usuarios WHERE correo_electronico = $1 AND esta_activo = true",
+    //   [correo_electronico]
+    // );
+
+    // Opción 2 (si esta_activo es INT 0/1, similar a MySQL):
+    const result = await pool.query(
+      "SELECT * FROM usuarios WHERE correo_electronico = $1 AND esta_activo = 1",
       [correo_electronico]
     );
 
+    const rows = result.rows;
+
     if (rows.length === 0) {
-      return res.status(401).json({ mensaje: "Usuario no encontrado o inactivo" });
+      return res
+        .status(401)
+        .json({ mensaje: "Usuario no encontrado o inactivo" });
     }
 
     const usuario = rows[0];
 
-    // Para esta demo, la contraseña no está encriptada (pero puedes activarlo más adelante con bcrypt)
+    // Para esta demo, la contraseña NO está encriptada
+    // (más adelante puedes cambiar esto a bcrypt.compare)
     const passwordValida = contrasena === usuario.contrasena;
 
     if (!passwordValida) {

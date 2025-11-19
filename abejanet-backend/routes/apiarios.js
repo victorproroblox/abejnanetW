@@ -11,16 +11,17 @@ router.get("/apiarios", async (req, res) => {
 
     if (q) {
       const like = `%${q}%`;
-      const [r] = await pool.query(
-        "SELECT id, nombre FROM apiarios WHERE nombre LIKE ? ORDER BY nombre ASC",
+      // En Postgres usamos $1 y podemos usar ILIKE para búsqueda case-insensitive
+      const result = await pool.query(
+        "SELECT id, nombre FROM apiarios WHERE nombre ILIKE $1 ORDER BY nombre ASC",
         [like]
       );
-      rows = r;
+      rows = result.rows;
     } else {
-      const [r] = await pool.query(
+      const result = await pool.query(
         "SELECT id, nombre FROM apiarios ORDER BY nombre ASC"
       );
-      rows = r;
+      rows = result.rows;
     }
 
     res.json(rows);
@@ -29,6 +30,5 @@ router.get("/apiarios", async (req, res) => {
     res.status(500).json({ error: "Error del servidor" });
   }
 });
-
 
 module.exports = router;

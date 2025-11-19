@@ -10,111 +10,187 @@ const rango = (desde, hasta) => [desde + " 00:00:00", hasta + " 23:59:59"];
    CATÁLOGOS BÁSICOS
 ========================= */
 router.get("/apiarios", async (_req, res) => {
-  const [rows] = await pool.query(
-    "SELECT id, nombre FROM apiarios ORDER BY nombre"
-  );
-  res.json(rows);
+  try {
+    const result = await pool.query(
+      "SELECT id, nombre FROM apiarios ORDER BY nombre"
+    );
+    res.json(result.rows);
+  } catch (e) {
+    console.error("Error /apiarios:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 router.get("/colmenas", async (_req, res) => {
-  const [rows] = await pool.query(
-    "SELECT id, apiario_id, nombre FROM colmenas ORDER BY nombre"
-  );
-  res.json(rows);
+  try {
+    const result = await pool.query(
+      "SELECT id, apiario_id, nombre FROM colmenas ORDER BY nombre"
+    );
+    res.json(result.rows);
+  } catch (e) {
+    console.error("Error /colmenas:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 /* =========================
    OPERATIVO
 ========================= */
-// KPIs (compatibles con MariaDB)
+// KPIs
 router.get("/resumen", async (req, res) => {
-  const { desde, hasta, apiarioId, colmenaId } = req.query;
-  const [from, to] = rango(desde, hasta);
-
-  const params = [];
-  let where = " WHERE 1=1 ";
-  if (apiarioId) { where += " AND c.apiario_id = ? "; params.push(apiarioId); }
-  if (colmenaId) { where += " AND c.id = ? "; params.push(colmenaId); }
-
   try {
+    const { desde, hasta, apiarioId, colmenaId } = req.query;
+    const [from, to] = rango(desde, hasta);
+
+    // Construimos condiciones dinámicas para usar en varias queries
+    const conditions = ["1=1"];
+    const baseValues = [];
+
+    if (apiarioId) {
+      conditions.push(`c.apiario_id = $${baseValues.length + 1}`);
+      baseValues.push(apiarioId);
+    }
+    if (colmenaId) {
+      conditions.push(`c.id = $${baseValues.length + 1}`);
+      baseValues.push(colmenaId);
+    }
+
+    const whereClause = " WHERE " + conditions.join(" AND ");
+
     // 1) Colmenas activas con lecturas en el rango
-    const [activas] = await pool.query(
-      `
-      SELECT COUNT(DISTINCT c.id) AS n
-      FROM lecturas_ambientales l
-      JOIN sensores s ON s.id = l.sensor_id
-      JOIN colmenas c ON c.id = s.colmena_id
-      ${where}
-      AND l.fecha_registro BETWEEN ? AND ?
-      `,
-      [...params, from, to]
-    );
+    {
+      const values = [...baseValues, from, to];
+      const fechaIdx1 = baseValues.length + 1;
+      const fechaIdx2 = baseValues.length + 2;
 
-    // 2) Promedio de peso en el rango
-    const [prom] = await pool.query(
-      `
-      SELECT AVG(l.peso) AS prom
-      FROM lecturas_ambientales l
-      JOIN sensores s ON s.id = l.sensor_id
-      JOIN colmenas c ON c.id = s.colmena_id
-      ${where}
-      AND l.fecha_registro BETWEEN ? AND ?
-      `,
-      [...params, from, to]
-    );
-
-    // 3) Variación promedio por colmena (último - primero del rango)
-    //    Truco con GROUP_CONCAT para evitar CTE/ventanas
-    const [var7] = await pool.query(
-      `
-      SELECT AVG(last_p - first_p) AS variacion
-      FROM (
-        SELECT
-          c.id AS colmena_id,
-          CAST(SUBSTRING_INDEX(GROUP_CONCAT(l.peso ORDER BY l.fecha_registro ASC), ',', 1) AS DECIMAL(10,3)) AS first_p,
-          CAST(SUBSTRING_INDEX(GROUP_CONCAT(l.peso ORDER BY l.fecha_registro DESC), ',', 1) AS DECIMAL(10,3)) AS last_p
+      const activasResult = await pool.query(
+        `
+        SELECT COUNT(DISTINCT c.id) AS n
         FROM lecturas_ambientales l
         JOIN sensores s ON s.id = l.sensor_id
         JOIN colmenas c ON c.id = s.colmena_id
-        ${where}
-        AND l.fecha_registro BETWEEN ? AND ?
-        GROUP BY c.id
-      ) t
-      `,
-      [...params, from, to]
-    );
+        ${whereClause}
+        AND l.fecha_registro BETWEEN $${fechaIdx1} AND $${fechaIdx2}
+        `,
+        values
+      );
+
+      var activas = activasResult.rows[0]?.n || 0;
+    }
+
+    // 2) Promedio de peso en el rango
+    {
+      const values = [...baseValues, from, to];
+      const fechaIdx1 = baseValues.length + 1;
+      const fechaIdx2 = baseValues.length + 2;
+
+      const promResult = await pool.query(
+        `
+        SELECT AVG(l.peso) AS prom
+        FROM lecturas_ambientales l
+        JOIN sensores s ON s.id = l.sensor_id
+        JOIN colmenas c ON c.id = s.colmena_id
+        ${whereClause}
+        AND l.fecha_registro BETWEEN $${fechaIdx1} AND $${fechaIdx2}
+        `,
+        values
+      );
+
+      var promPeso = promResult.rows[0]?.prom || 0;
+    }
+
+    // 3) Variación promedio por colmena (último - primero del rango)
+    //    Versión Postgres usando subconsultas
+    {
+      const values = [...baseValues, from, to, from, to];
+      const idxFrom1 = baseValues.length + 1;
+      const idxTo1 = baseValues.length + 2;
+      const idxFrom2 = baseValues.length + 3;
+      const idxTo2 = baseValues.length + 4;
+
+      const varResult = await pool.query(
+        `
+        SELECT AVG(last_p - first_p) AS variacion
+        FROM (
+          SELECT
+            c.id AS colmena_id,
+            -- primer peso en el rango
+            (
+              SELECT l1.peso
+              FROM lecturas_ambientales l1
+              JOIN sensores s1 ON s1.id = l1.sensor_id
+              WHERE s1.colmena_id = c.id
+                AND l1.fecha_registro BETWEEN $${idxFrom1} AND $${idxTo1}
+              ORDER BY l1.fecha_registro ASC
+              LIMIT 1
+            ) AS first_p,
+            -- último peso en el rango
+            (
+              SELECT l2.peso
+              FROM lecturas_ambientales l2
+              JOIN sensores s2 ON s2.id = l2.sensor_id
+              WHERE s2.colmena_id = c.id
+                AND l2.fecha_registro BETWEEN $${idxFrom2} AND $${idxTo2}
+              ORDER BY l2.fecha_registro DESC
+              LIMIT 1
+            ) AS last_p
+          FROM colmenas c
+          -- solo consideramos colmenas que tengan lecturas en el rango y cumplan filtros
+          WHERE EXISTS (
+            SELECT 1
+            FROM lecturas_ambientales l3
+            JOIN sensores s3 ON s3.id = l3.sensor_id
+            JOIN colmenas c3 ON c3.id = s3.colmena_id
+            ${whereClause.replace("1=1", "c3.id = c.id")}
+            AND l3.fecha_registro BETWEEN $${idxFrom1} AND $${idxTo1}
+          )
+        ) t
+        WHERE first_p IS NOT NULL AND last_p IS NOT NULL
+        `,
+        values
+      );
+
+      var variacion7d = varResult.rows[0]?.variacion || 0;
+    }
 
     // 4) Alertas por caída brusca (≤ -1.5 kg) entre lecturas consecutivas
-    //    Self-join con subconsulta (sin LATERAL)
-    const [alertas] = await pool.query(
-      `
-      SELECT COUNT(*) AS n
-      FROM (
-        SELECT (l2.peso - l1.peso) AS delta
-        FROM lecturas_ambientales l1
-        JOIN sensores s1 ON s1.id = l1.sensor_id
-        JOIN colmenas c ON c.id = s1.colmena_id
-        JOIN lecturas_ambientales l2
-          ON l2.sensor_id = s1.id
-         AND l2.fecha_registro = (
-              SELECT MIN(l3.fecha_registro)
-              FROM lecturas_ambientales l3
-              WHERE l3.sensor_id = s1.id
-                AND l3.fecha_registro > l1.fecha_registro
-            )
-        ${where}
-        AND l1.fecha_registro BETWEEN ? AND ?
-      ) x
-      WHERE delta <= -1.5
-      `,
-      [...params, from, to]
-    );
+    {
+      const values = [...baseValues, from, to];
+      const idxFrom = baseValues.length + 1;
+      const idxTo = baseValues.length + 2;
+
+      const alertasResult = await pool.query(
+        `
+        SELECT COUNT(*) AS n
+        FROM (
+          SELECT (l2.peso - l1.peso) AS delta
+          FROM lecturas_ambientales l1
+          JOIN sensores s1 ON s1.id = l1.sensor_id
+          JOIN colmenas c ON c.id = s1.colmena_id
+          JOIN lecturas_ambientales l2
+            ON l2.sensor_id = s1.id
+           AND l2.fecha_registro = (
+                SELECT MIN(l3.fecha_registro)
+                FROM lecturas_ambientales l3
+                WHERE l3.sensor_id = s1.id
+                  AND l3.fecha_registro > l1.fecha_registro
+              )
+          ${whereClause}
+          AND l1.fecha_registro BETWEEN $${idxFrom} AND $${idxTo}
+        ) x
+        WHERE delta <= -1.5
+        `,
+        values
+      );
+
+      var alertas = alertasResult.rows[0]?.n || 0;
+    }
 
     res.json({
-      activas: activas[0]?.n || 0,
-      promPeso: prom[0]?.prom || 0,
-      variacion7d: var7[0]?.variacion || 0,
-      alertas: alertas[0]?.n || 0,
+      activas,
+      promPeso,
+      variacion7d,
+      alertas,
     });
   } catch (e) {
     console.error("Error KPIs /resumen:", e);
@@ -124,191 +200,302 @@ router.get("/resumen", async (req, res) => {
 
 // Serie de peso
 router.get("/serie-peso", async (req, res) => {
-  const { desde, hasta, apiarioId, colmenaId } = req.query;
-  const [from, to] = rango(desde, hasta);
-  const params = [];
-  let where = " WHERE 1=1 ";
+  try {
+    const { desde, hasta, apiarioId, colmenaId } = req.query;
+    const [from, to] = rango(desde, hasta);
 
-  if (apiarioId) { where += " AND c.apiario_id = ? "; params.push(apiarioId); }
-  if (colmenaId) { where += " AND c.id = ? "; params.push(colmenaId); }
+    const conditions = ["1=1"];
+    const values = [];
 
-  const [rows] = await pool.query(
-    `
-    SELECT DATE_FORMAT(l.fecha_registro, '%Y-%m-%d %H:%i') AS fecha,
-           c.nombre AS colmena, l.peso
-    FROM lecturas_ambientales l
-    JOIN sensores s ON s.id = l.sensor_id
-    JOIN colmenas c ON c.id = s.colmena_id
-    ${where} AND l.fecha_registro BETWEEN ? AND ?
-    ORDER BY l.fecha_registro
-    `,
-    [...params, from, to]
-  );
-  res.json(rows);
+    if (apiarioId) {
+      conditions.push(`c.apiario_id = $${values.length + 1}`);
+      values.push(apiarioId);
+    }
+    if (colmenaId) {
+      conditions.push(`c.id = $${values.length + 1}`);
+      values.push(colmenaId);
+    }
+
+    const idxFrom = values.length + 1;
+    const idxTo = values.length + 2;
+    values.push(from, to);
+
+    const whereClause = " WHERE " + conditions.join(" AND ");
+
+    const result = await pool.query(
+      `
+      SELECT 
+        to_char(l.fecha_registro, 'YYYY-MM-DD HH24:MI') AS fecha,
+        c.nombre AS colmena,
+        l.peso
+      FROM lecturas_ambientales l
+      JOIN sensores s ON s.id = l.sensor_id
+      JOIN colmenas c ON c.id = s.colmena_id
+      ${whereClause}
+      AND l.fecha_registro BETWEEN $${idxFrom} AND $${idxTo}
+      ORDER BY l.fecha_registro
+      `,
+      values
+    );
+
+    res.json(result.rows);
+  } catch (e) {
+    console.error("Error /serie-peso:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 // Serie ambiente (temp/humedad)
 router.get("/serie-ambiente", async (req, res) => {
-  const { desde, hasta, apiarioId, colmenaId } = req.query;
-  const [from, to] = rango(desde, hasta);
-  const params = [];
-  let where = " WHERE 1=1 ";
-  if (apiarioId) { where += " AND c.apiario_id = ? "; params.push(apiarioId); }
-  if (colmenaId) { where += " AND c.id = ? "; params.push(colmenaId); }
+  try {
+    const { desde, hasta, apiarioId, colmenaId } = req.query;
+    const [from, to] = rango(desde, hasta);
 
-  const [rows] = await pool.query(
-    `
-    SELECT DATE_FORMAT(l.fecha_registro, '%Y-%m-%d %H:%i') AS fecha,
-           l.temperatura, l.humedad
-    FROM lecturas_ambientales l
-    JOIN sensores s ON s.id = l.sensor_id
-    JOIN colmenas c ON c.id = s.colmena_id
-    ${where} AND l.fecha_registro BETWEEN ? AND ?
-    ORDER BY l.fecha_registro
-    `,
-    [...params, from, to]
-  );
-  res.json(rows);
+    const conditions = ["1=1"];
+    const values = [];
+
+    if (apiarioId) {
+      conditions.push(`c.apiario_id = $${values.length + 1}`);
+      values.push(apiarioId);
+    }
+    if (colmenaId) {
+      conditions.push(`c.id = $${values.length + 1}`);
+      values.push(colmenaId);
+    }
+
+    const idxFrom = values.length + 1;
+    const idxTo = values.length + 2;
+    values.push(from, to);
+
+    const whereClause = " WHERE " + conditions.join(" AND ");
+
+    const result = await pool.query(
+      `
+      SELECT 
+        to_char(l.fecha_registro, 'YYYY-MM-DD HH24:MI') AS fecha,
+        l.temperatura,
+        l.humedad
+      FROM lecturas_ambientales l
+      JOIN sensores s ON s.id = l.sensor_id
+      JOIN colmenas c ON c.id = s.colmena_id
+      ${whereClause}
+      AND l.fecha_registro BETWEEN $${idxFrom} AND $${idxTo}
+      ORDER BY l.fecha_registro
+      `,
+      values
+    );
+
+    res.json(result.rows);
+  } catch (e) {
+    console.error("Error /serie-ambiente:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 /* =========================
    ADMIN: USUARIOS
 ========================= */
-// KPIs + por rol (con rango para altas)
+// KPIs + por rol
 router.get("/usuarios/resumen", async (req, res) => {
-  const { desde, hasta } = req.query;
-  const [from, to] = rango(desde, hasta);
+  try {
+    // aunque recibes desde/hasta, aquí realmente no se usan en tu lógica original
+    const totResult = await pool.query(
+      "SELECT COUNT(*) AS total FROM usuarios"
+    );
+    const actResult = await pool.query(
+      "SELECT COUNT(*) AS activos FROM usuarios WHERE esta_activo = 1"
+    );
+    const inactResult = await pool.query(
+      "SELECT COUNT(*) AS inactivos FROM usuarios WHERE esta_activo = 0"
+    );
+    const porRolResult = await pool.query(
+      `
+      SELECT r.nombre AS rol, COUNT(*) AS cantidad
+      FROM usuarios u
+      JOIN roles r ON r.id = u.rol_id
+      GROUP BY r.id, r.nombre
+      ORDER BY cantidad DESC
+      `
+    );
 
-  const [[tot]]   = await pool.query("SELECT COUNT(*) AS total FROM usuarios");
-  const [[act]]   = await pool.query("SELECT COUNT(*) AS activos FROM usuarios WHERE esta_activo = 1");
-  const [[inact]] = await pool.query("SELECT COUNT(*) AS inactivos FROM usuarios WHERE esta_activo = 0");
-  const [porRol]  = await pool.query(`
-    SELECT r.nombre AS rol, COUNT(*) AS cantidad
-    FROM usuarios u
-    JOIN roles r ON r.id = u.rol_id
-    GROUP BY r.id, r.nombre
-    ORDER BY cantidad DESC
-  `);
-
-  res.json({
-    total: tot.total,
-    activos: act.activos,
-    inactivos: inact.inactivos,
-    porRol,
-  });
+    res.json({
+      total: totResult.rows[0]?.total || 0,
+      activos: actResult.rows[0]?.activos || 0,
+      inactivos: inactResult.rows[0]?.inactivos || 0,
+      porRol: porRolResult.rows,
+    });
+  } catch (e) {
+    console.error("Error /usuarios/resumen:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 // Altas por mes (en rango)
 router.get("/usuarios/crecimiento", async (req, res) => {
-  const { desde, hasta } = req.query;
-  const [from, to] = rango(desde, hasta);
-  const [rows] = await pool.query(
-    `
-    SELECT DATE_FORMAT(fecha_creacion, '%Y-%m') AS mes, COUNT(*) AS altas
-    FROM usuarios
-    WHERE fecha_creacion BETWEEN ? AND ?
-    GROUP BY DATE_FORMAT(fecha_creacion, '%Y-%m')
-    ORDER BY mes
-    `,
-    [from, to]
-  );
-  res.json(rows);
+  try {
+    const { desde, hasta } = req.query;
+    const [from, to] = rango(desde, hasta);
+
+    const result = await pool.query(
+      `
+      SELECT 
+        to_char(fecha_creacion, 'YYYY-MM') AS mes,
+        COUNT(*) AS altas
+      FROM usuarios
+      WHERE fecha_creacion BETWEEN $1 AND $2
+      GROUP BY to_char(fecha_creacion, 'YYYY-MM')
+      ORDER BY mes
+      `,
+      [from, to]
+    );
+
+    res.json(result.rows);
+  } catch (e) {
+    console.error("Error /usuarios/crecimiento:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 // Listado (puedes paginar luego)
 router.get("/usuarios/listado", async (_req, res) => {
-  const [rows] = await pool.query(
-    `
-    SELECT u.id, u.nombre, u.apellido_paterno, u.correo_electronico,
-           u.esta_activo, DATE_FORMAT(u.fecha_creacion,'%Y-%m-%d %H:%i') AS fecha_creacion,
-           r.nombre AS rol
-    FROM usuarios u
-    LEFT JOIN roles r ON r.id = u.rol_id
-    ORDER BY u.fecha_creacion DESC
-    LIMIT 100
-    `
-  );
-  res.json(rows);
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        u.id,
+        u.nombre,
+        u.apellido_paterno,
+        u.correo_electronico,
+        u.esta_activo,
+        to_char(u.fecha_creacion,'YYYY-MM-DD HH24:MI') AS fecha_creacion,
+        r.nombre AS rol
+      FROM usuarios u
+      LEFT JOIN roles r ON r.id = u.rol_id
+      ORDER BY u.fecha_creacion DESC
+      LIMIT 100
+      `
+    );
+    res.json(result.rows);
+  } catch (e) {
+    console.error("Error /usuarios/listado:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 /* =========================
    ADMIN: COLMENAS
 ========================= */
 router.get("/colmenas/resumen", async (_req, res) => {
-  const [[tot]] = await pool.query("SELECT COUNT(*) AS total FROM colmenas");
-  const [[conS]] = await pool.query(
-    "SELECT COUNT(DISTINCT colmena_id) AS n FROM sensores WHERE colmena_id IS NOT NULL"
-  );
-  const [[sinS]] = await pool.query(
-    "SELECT COUNT(*) AS n FROM colmenas WHERE id NOT IN (SELECT DISTINCT colmena_id FROM sensores WHERE colmena_id IS NOT NULL)"
-  );
-  // activas últimos 7 días (con lecturas)
-  const [act7] = await pool.query(
-    `
-    SELECT COUNT(DISTINCT c.id) AS n
-    FROM lecturas_ambientales l
-    JOIN sensores s ON s.id = l.sensor_id
-    JOIN colmenas c ON c.id = s.colmena_id
-    WHERE l.fecha_registro >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-    `
-  );
-  res.json({
-    total: tot.total,
-    con_sensor: conS.n,
-    sin_sensor: sinS.n,
-    activas_7d: act7[0]?.n || 0,
-  });
+  try {
+    const totResult = await pool.query(
+      "SELECT COUNT(*) AS total FROM colmenas"
+    );
+    const conSResult = await pool.query(
+      "SELECT COUNT(DISTINCT colmena_id) AS n FROM sensores WHERE colmena_id IS NOT NULL"
+    );
+    const sinSResult = await pool.query(
+      `
+      SELECT COUNT(*) AS n
+      FROM colmenas
+      WHERE id NOT IN (
+        SELECT DISTINCT colmena_id
+        FROM sensores
+        WHERE colmena_id IS NOT NULL
+      )
+      `
+    );
+    const act7Result = await pool.query(
+      `
+      SELECT COUNT(DISTINCT c.id) AS n
+      FROM lecturas_ambientales l
+      JOIN sensores s ON s.id = l.sensor_id
+      JOIN colmenas c ON c.id = s.colmena_id
+      WHERE l.fecha_registro >= now() - interval '7 days'
+      `
+    );
+
+    res.json({
+      total: totResult.rows[0]?.total || 0,
+      con_sensor: conSResult.rows[0]?.n || 0,
+      sin_sensor: sinSResult.rows[0]?.n || 0,
+      activas_7d: act7Result.rows[0]?.n || 0,
+    });
+  } catch (e) {
+    console.error("Error /colmenas/resumen:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 router.get("/colmenas/por-apiario", async (_req, res) => {
-  const [rows] = await pool.query(
-    `
-    SELECT a.nombre AS apiario, COUNT(*) AS colmenas
-    FROM colmenas c
-    JOIN apiarios a ON a.id = c.apiario_id
-    GROUP BY a.id, a.nombre
-    ORDER BY colmenas DESC
-    `
-  );
-  res.json(rows);
+  try {
+    const result = await pool.query(
+      `
+      SELECT a.nombre AS apiario, COUNT(*) AS colmenas
+      FROM colmenas c
+      JOIN apiarios a ON a.id = c.apiario_id
+      GROUP BY a.id, a.nombre
+      ORDER BY colmenas DESC
+      `
+    );
+    res.json(result.rows);
+  } catch (e) {
+    console.error("Error /colmenas/por-apiario:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 /* =========================
    ADMIN: APIARIOS
 ========================= */
 router.get("/apiarios/resumen-admin", async (_req, res) => {
-  const [[api]] = await pool.query("SELECT COUNT(*) AS n FROM apiarios");
-  const [[col]] = await pool.query("SELECT COUNT(*) AS n FROM colmenas");
-  const [[sen]] = await pool.query("SELECT COUNT(*) AS n FROM sensores");
-  const [[lec7]] = await pool.query(
-    "SELECT COUNT(*) AS n FROM lecturas_ambientales WHERE fecha_registro >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
-  );
-  res.json({
-    apiarios: api.n,
-    colmenas: col.n,
-    sensores: sen.n,
-    lecturas_7d: lec7.n,
-  });
+  try {
+    const apiResult = await pool.query("SELECT COUNT(*) AS n FROM apiarios");
+    const colResult = await pool.query("SELECT COUNT(*) AS n FROM colmenas");
+    const senResult = await pool.query("SELECT COUNT(*) AS n FROM sensores");
+    const lec7Result = await pool.query(
+      `
+      SELECT COUNT(*) AS n
+      FROM lecturas_ambientales
+      WHERE fecha_registro >= now() - interval '7 days'
+      `
+    );
+
+    res.json({
+      apiarios: apiResult.rows[0]?.n || 0,
+      colmenas: colResult.rows[0]?.n || 0,
+      sensores: senResult.rows[0]?.n || 0,
+      lecturas_7d: lec7Result.rows[0]?.n || 0,
+    });
+  } catch (e) {
+    console.error("Error /apiarios/resumen-admin:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 router.get("/apiarios/top-actividad", async (req, res) => {
-  const { desde, hasta } = req.query;
-  const [from, to] = rango(desde, hasta);
-  const [rows] = await pool.query(
-    `
-    SELECT a.nombre AS apiario, COUNT(*) AS lecturas
-    FROM lecturas_ambientales l
-    JOIN sensores s ON s.id = l.sensor_id
-    JOIN colmenas c ON c.id = s.colmena_id
-    JOIN apiarios a ON a.id = c.apiario_id
-    WHERE l.fecha_registro BETWEEN ? AND ?
-    GROUP BY a.id, a.nombre
-    ORDER BY lecturas DESC
-    `,
-    [from, to]
-  );
-  res.json(rows);
+  try {
+    const { desde, hasta } = req.query;
+    const [from, to] = rango(desde, hasta);
+
+    const result = await pool.query(
+      `
+      SELECT a.nombre AS apiario, COUNT(*) AS lecturas
+      FROM lecturas_ambientales l
+      JOIN sensores s ON s.id = l.sensor_id
+      JOIN colmenas c ON c.id = s.colmena_id
+      JOIN apiarios a ON a.id = c.apiario_id
+      WHERE l.fecha_registro BETWEEN $1 AND $2
+      GROUP BY a.id, a.nombre
+      ORDER BY lecturas DESC
+      `,
+      [from, to]
+    );
+
+    res.json(result.rows);
+  } catch (e) {
+    console.error("Error /apiarios/top-actividad:", e);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 module.exports = router;
- 
