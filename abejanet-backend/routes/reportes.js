@@ -295,40 +295,44 @@ router.get("/serie-ambiente", async (req, res) => {
 /* =========================
    ADMIN: USUARIOS
 ========================= */
-// KPIs + por rol
+// ✅ Versión Postgres
 router.get("/usuarios/resumen", async (req, res) => {
   try {
-    // aunque recibes desde/hasta, aquí realmente no se usan en tu lógica original
-    const totResult = await pool.query(
+    const { desde, hasta } = req.query;
+    const [from, to] = rango(desde, hasta); // lo sigues usando si quieres el rango
+
+    const { rows: [tot] } = await pool.query(
       "SELECT COUNT(*) AS total FROM usuarios"
     );
-    const actResult = await pool.query(
-      "SELECT COUNT(*) AS activos FROM usuarios WHERE esta_activo = 1"
+
+    const { rows: [act] } = await pool.query(
+      "SELECT COUNT(*) AS activos FROM usuarios WHERE esta_activo = true"
     );
-    const inactResult = await pool.query(
-      "SELECT COUNT(*) AS inactivos FROM usuarios WHERE esta_activo = 0"
+
+    const { rows: [inact] } = await pool.query(
+      "SELECT COUNT(*) AS inactivos FROM usuarios WHERE esta_activo = false"
     );
-    const porRolResult = await pool.query(
-      `
+
+    const { rows: porRol } = await pool.query(`
       SELECT r.nombre AS rol, COUNT(*) AS cantidad
       FROM usuarios u
       JOIN roles r ON r.id = u.rol_id
       GROUP BY r.id, r.nombre
       ORDER BY cantidad DESC
-      `
-    );
+    `);
 
     res.json({
-      total: totResult.rows[0]?.total || 0,
-      activos: actResult.rows[0]?.activos || 0,
-      inactivos: inactResult.rows[0]?.inactivos || 0,
-      porRol: porRolResult.rows,
+      total: Number(tot.total) || 0,
+      activos: Number(act.activos) || 0,
+      inactivos: Number(inact.inactivos) || 0,
+      porRol,
     });
   } catch (e) {
     console.error("Error /usuarios/resumen:", e);
-    res.status(500).json({ error: "Error del servidor" });
+    res.status(500).json({ error: e.message });
   }
 });
+
 
 // Altas por mes (en rango)
 router.get("/usuarios/crecimiento", async (req, res) => {
