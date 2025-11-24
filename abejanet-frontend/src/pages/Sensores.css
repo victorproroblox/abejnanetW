@@ -1,139 +1,335 @@
-/* NUEVO: Estilos para la barra de filtros */
+/* ====== LAYOUT GENERAL (fondo tipo Colmenas) ====== */
+
+.sensores-layout {
+  display: flex;
+  min-height: 100vh;
+  /* El fondo real de panel ya lo tienes global, aquí solo oscurezco un poco */
+  background: radial-gradient(circle at top, rgba(255, 230, 0, 0.12), transparent 55%),
+              rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ====== SIDEBAR ====== */
+
+.sensores-sidebar {
+  width: 230px;
+  padding: 24px 18px;
+  background: linear-gradient(180deg, rgba(8, 8, 8, 0.95), rgba(8, 8, 8, 0.9));
+  border-right: 1px solid rgba(255, 230, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sensores-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.sensores-logo-icon {
+  font-size: 1.4rem;
+}
+
+.sensores-logo-text {
+  font-size: 1.1rem;
+}
+
+.sensores-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sensores-nav-item {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #ddd;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}
+
+.sensores-nav-item span:first-child {
+  width: 22px;
+}
+
+.sensores-nav-item:hover {
+  background: rgba(255, 230, 0, 0.1);
+  color: #fff;
+  transform: translateX(2px);
+}
+
+.sensores-nav-item-active {
+  background: linear-gradient(90deg, #ffe600, #ffb700);
+  color: #000;
+  font-weight: 600;
+}
+
+/* ====== MAIN CONTENT ====== */
+
+.sensores-main {
+  flex: 1;
+  padding: 28px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header tipo Colmenas */
+
+.sensores-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.sensores-header h1 {
+  font-size: 1.8rem;
+  margin: 4px 0 6px;
+}
+
+.sensores-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #ffec80;
+  opacity: 0.9;
+}
+
+.sensores-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #cccccc;
+}
+
+.sensores-header-resumen {
+  display: flex;
+  align-items: center;
+}
+
+.sensores-resumen-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 230, 0, 0.6);
+  font-size: 0.85rem;
+}
+
+/* ====== TARJETAS (glassmorphism como Colmenas) ====== */
+
+.sensores-card {
+  background: radial-gradient(circle at top left, rgba(255, 230, 0, 0.15), transparent 50%),
+              rgba(10, 10, 10, 0.88);
+  border-radius: 18px;
+  padding: 18px 20px 20px;
+  border: 1px solid rgba(255, 230, 0, 0.18);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
+}
+
+/* ====== FILTROS (arriba de la tarjeta) ====== */
+
 .form-sensor-filtros {
   display: flex;
-  flex-wrap: wrap; /* Para que se ajuste en móviles */
+  flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 20px; /* Separación del formulario de abajo */
-  border-bottom: 1px solid #444; /* Línea divisoria */
-  padding-bottom: 20px; /* Espacio antes de la línea */
+  margin-bottom: 16px;
 }
 
-/* Hacemos que los elementos de filtro crezcan */
 .form-sensor-filtros select,
 .form-sensor-filtros input {
-  flex: 1; /* Permite que crezcan y ocupen espacio */
-  min-width: 180px; /* Ancho mínimo antes de saltar de línea */
-  
-  /* Reutilizamos los mismos estilos de tus inputs */
-  background-color: #333;
+  flex: 1;
+  min-width: 190px;
+  background-color: rgba(15, 15, 15, 0.9);
   color: white;
-  border: 1px solid #555;
-  padding: 10px 15px;
-  border-radius: 8px;
-  font-size: 1rem;
+  border: 1px solid #444;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.9rem;
 }
 
-.form-sensor-filtros button {
-  flex-basis: 150px; /* Ancho base para el botón */
-  
-  /* Reutilizamos estilos del botón 'cancelar' */
-  padding: 10px 15px;
+.form-sensor-filtros input::placeholder {
+  color: #aaaaaa;
+}
+
+/* Botones reutilizables */
+
+.btn-primario,
+.btn-secundario {
+  border-radius: 999px;
+  padding: 10px 18px;
   border: none;
-  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
-  background-color: #555; /* Un gris neutro */
-  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.18s ease;
 }
 
-.form-sensor-filtros button:hover {
-  background-color: #666;
+.btn-primario {
+  background: linear-gradient(120deg, #ffe600, #ffb700);
+  color: #000;
+  box-shadow: 0 0 14px rgba(255, 230, 0, 0.45);
 }
 
-
-/* ====== CONTENEDOR PRINCIPAL ====== */
-.cuenta-card {
-  width: 90%;
-  max-width: 1100px;
-  background: #111;
-  padding: 30px;
-  border-radius: 16px;
-  box-shadow: 0 0 20px rgba(255, 230, 0, 0.2);
-  border: 1px solid rgba(255, 230, 0, 0.4);
+.btn-primario:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 0 22px rgba(255, 230, 0, 0.7);
 }
-/* ====== FORMULARIO ====== */
+
+.btn-secundario {
+  background-color: #333;
+  color: #ffe600;
+  border: 1px solid #555;
+}
+
+.btn-secundario:hover {
+  background-color: #444;
+}
+
+/* Botón dentro de filtros */
+.form-sensor-filtros .btn-secundario {
+  flex-basis: 160px;
+}
+
+/* ====== FORMULARIO (grid tipo Colmenas) ====== */
+
 .form-sensor {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
-  margin-bottom: 30px;
+  align-items: center;
 }
 
+.form-sensor select,
 .form-sensor input {
-  padding: 10px;
-  border: 1px solid #ffe600;
-  border-radius: 8px;
-  color: #000000;
-  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #444;
+  background: rgba(12, 12, 12, 0.95);
+  color: #fff;
+  font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.form-sensor select:focus,
 .form-sensor input:focus {
-  border-color: #fff200;
+  border-color: #ffe600;
+  box-shadow: 0 0 0 1px rgba(255, 230, 0, 0.7);
 }
 
-.form-sensor button {
-  background-color: #ffe600;
-  color: #000;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  padding: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.form-sensor button:hover {
-  background-color: #fff200;
-  box-shadow: 0 0 10px rgba(255, 230, 0, 0.5);
-}
-
-.form-sensor .cancelar {
-  background-color: #333;
-  color: #ffe600;
-}
-
-.form-sensor .cancelar:hover {
-  background-color: #444;
+.form-sensor-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 /* ====== TABLA ====== */
+
+.tabla-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 4px;
+}
+
 .tabla-sensores {
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
-  background-color: #000;
+  font-size: 0.9rem;
+  background: rgba(5, 5, 5, 0.9);
   color: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
 .tabla-sensores thead {
-  background-color: #222;
-  color: #ffe600;
+  background: linear-gradient(90deg, #1a1a1a, #262626);
 }
 
 .tabla-sensores th,
 .tabla-sensores td {
-  padding: 14px 16px;
+  padding: 12px 14px;
   text-align: left;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #222;
 }
 
-.tabla-sensores tr:hover {
-  background-color: #111;
+.tabla-sensores th {
+  font-weight: 600;
+  color: #ffe600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-/* ====== BOTONES DE ACCIÓN ====== */
+.tabla-sensores tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tabla-sensores-actions {
+  white-space: nowrap;
+}
+
+/* Pills de estado */
+
+.estado-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-transform: capitalize;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.estado-activo {
+  background: rgba(0, 209, 86, 0.18);
+  border-color: rgba(0, 209, 86, 0.9);
+}
+
+.estado-inactivo {
+  background: rgba(255, 77, 77, 0.18);
+  border-color: rgba(255, 77, 77, 0.9);
+}
+
+.estado-mantenimiento {
+  background: rgba(255, 193, 7, 0.18);
+  border-color: rgba(255, 193, 7, 0.9);
+}
+
+.estado-no_asignado {
+  background: rgba(150, 150, 150, 0.18);
+  border-color: rgba(150, 150, 150, 0.9);
+}
+
+/* Botones de acción en la tabla */
+
 .tabla-sensores button {
   border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 6px 9px;
+  border-radius: 999px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.2s ease;
+  font-size: 0.95rem;
   margin-right: 4px;
+  transition: all 0.15s ease;
 }
 
 .tabla-sensores .editar {
@@ -142,8 +338,7 @@
 }
 
 .tabla-sensores .editar:hover {
-  background-color: #fff200;
-  box-shadow: 0 0 6px rgba(255, 230, 0, 0.5);
+  filter: brightness(1.05);
 }
 
 .tabla-sensores .eliminar {
@@ -152,29 +347,64 @@
 }
 
 .tabla-sensores .eliminar:hover {
-  background-color: #ff5555;
-  box-shadow: 0 0 6px rgba(255, 90, 90, 0.5);
+  filter: brightness(1.1);
 }
 
-/* ====== ESTADO VACÍO ====== */
-.cuenta-card p {
+/* Texto vacío y loading */
+
+.sensores-empty {
   text-align: center;
-  color: #aaa;
-  margin-top: 20px;
+  color: #aaaaaa;
+  margin: 12px 0 4px;
+}
+
+.cuenta-loading {
+  text-align: center;
+  padding: 20px 0;
 }
 
 /* ====== RESPONSIVE ====== */
+
+@media (max-width: 1024px) {
+  .sensores-main {
+    padding: 22px 18px 26px;
+  }
+
+  .sensores-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 @media (max-width: 768px) {
-  .tabla-sensores {
-    font-size: 13px;
+  .sensores-layout {
+    flex-direction: column;
+  }
+
+  .sensores-sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+  }
+
+  .sensores-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .sensores-nav-item {
+    padding-inline: 10px;
   }
 
   .form-sensor {
     grid-template-columns: 1fr;
   }
 
-  .form-sensor input,
-  .form-sensor button {
-    width: 100%;
+  .form-sensor-actions {
+    justify-content: flex-start;
   }
 }
