@@ -1,280 +1,430 @@
-/* ====== Tokens de color (tema miel) ====== */
-:root{
-  --honey-50:#FFF7D6;
-  --honey-100:#FFEFA8;
-  --honey-300:#FFD24D;
-  --honey-400:#FFC41F;
-  --honey-500:#FFB300; /* acento */
-  --ink:#0E0E0F;        /* texto primario */
-  --gray-400:#B9BEC7;
-  --gray-500:#8B90A0;
-  --surface:#FFFFFF;
-  --ring:#222;
-  --success:#2E7D32;
-  --danger:#D32F2F;
-  --shadow: 0 20px 50px rgba(14,14,15,0.15);
+/* ====== Paleta y fondo ====== */
+:root {
+  --honey-50: #fff7d6;
+  --honey-100: #ffefa8;
+  --honey-300: #ffd24d;
+  --honey-400: #ffc41f;
+  --honey-500: #ffb300;
+  --ink: #0b0b0e;
+  --gray-300: #d1d5dd;
+  --gray-400: #b9bec7;
+  --gray-500: #8b90a0;
+  --gray-700: #3b3f4a;
+  --surface: #ffffff;
+  --danger: #d32f2f;
+  --shadow-main: 0 26px 60px rgba(0, 0, 0, 0.6);
 
-  /* Fondo por defecto (cámbialo si lo pasas desde React) */
-  --bg-url: url("https://wallpapers.com/images/hd/bee-background-5u67g7klzs9jynmt.jpg");
+  --bg-url: url("https://e1.pxfuel.com/desktop-wallpaper/141/820/desktop-wallpaper-beehive-bee-hive.jpg");
 }
 
-/* ====== Lienzo ====== */
-.login-full{
-  /* Imagen de fondo a pantalla completa */
+/* ====== Lienzo completo ====== */
+.login-full {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Arial, sans-serif;
+  color: var(--surface);
   background-image: var(--bg-url);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: scroll; /* pon fixed si te late el parallax */
-
-  min-height:100vh;
-  display:grid;
-  place-items:center;
-  padding:24px;
-  position:relative;
-  font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color: var(--ink);
-  overflow:hidden;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Patrón hexagonal sutil encima del fondo (no afecta colores) */
-.hex-bg{
-  position:absolute; inset:0;
-  background-image:
-    radial-gradient(circle at 50% 50%, rgba(255,179,0,.08) 0 2px, transparent 2px),
-    radial-gradient(circle at 0 0, rgba(255,179,0,.06) 0 2px, transparent 2px);
-  background-size: 24px 24px, 24px 24px;
-  background-position: 0 0, 12px 12px; /* efecto panal */
-  pointer-events:none;
-  filter: blur(0.2px);
-  opacity:.6;
+/* Capa oscura con degradados para legibilidad */
+.login-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 0, rgba(255, 179, 0, 0.11) 0, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 179, 0, 0.14) 0, transparent 55%),
+    linear-gradient(145deg, rgba(2, 6, 23, 0.92), rgba(15, 23, 42, 0.96));
+  z-index: 0;
+}
+
+/* Contenedor para limitar ancho */
+.login-shell {
+  width: 100%;
+  max-width: 980px;
+  position: relative;
   z-index: 1;
 }
 
-/* ====== Tarjeta (frosted glass: transparente + blur SOLO aquí) ====== */
-.login-card{
-  position:relative;
-  width:100%;
-  max-width: 440px;
-
-  /* Transparencia + blur del fondo subyacente */
-  background-color: rgba(255,255,255,0.14);         /* capa translúcida */
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  backdrop-filter: blur(14px) saturate(140%);
-
-  /* Borde y brillo sutiles tipo vidrio */
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.35);
-  box-shadow: 0 16px 32px rgba(0,0,0,0.18);
-  padding: 28px 28px 18px;
-  z-index: 2;
+/* ====== Tarjeta principal (dos columnas) ====== */
+.login-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 0;
+  border-radius: 26px;
+  background: radial-gradient(
+      circle at top,
+      rgba(255, 255, 255, 0.18),
+      transparent 60%
+    ),
+    rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: var(--shadow-main);
+  overflow: hidden;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
-/* Refuerzo de brillo en el borde superior (detalle glass) */
-.login-card::before{
-  content:"";
-  position:absolute; inset:0;
-  border-radius: 20px;
-  pointer-events:none;
-  background: linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0) 45%);
+/* ================== Columna izquierda: hero ================== */
+
+.login-hero {
+  padding: 28px 26px 26px 30px;
+  background: radial-gradient(
+      circle at 0 0,
+      rgba(255, 213, 74, 0.25),
+      transparent 55%
+    ),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.login-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle at 25% 25%,
+    rgba(255, 255, 255, 0.07) 0,
+    transparent 35%
+  );
   mix-blend-mode: screen;
-  opacity:.8;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
-/* Fallback si el navegador no soporta backdrop-filter */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
-  .login-card{
-    background-color: rgba(255,255,255,0.78); /* se ve bien sin blur */
-  }
+.login-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.45));
 }
 
-.header{
-  text-align:center;
-  margin-bottom: 18px;
-}
-.logo{
-  width: 88px; height:auto;
-  display:block; margin: 0 auto 10px;
-  transition: transform .35s ease;
-}
-
-
-.title{
-  font-size: 22px;
-  line-height:1.2;
+.login-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   margin: 0;
+  color: #f9fafb;
+  position: relative;
+  z-index: 1;
+}
+
+.login-title span {
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.login-subtitle {
+  margin: 6px 0 16px;
+  font-size: 14px;
+  color: #e5e7eb;
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+/* bullets de beneficios */
+.login-bullets {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.login-bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #e5e7eb;
+  padding: 6px 0;
+}
+
+.login-bullets li i {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--honey-300);
+}
+
+/* Pills informativas */
+.login-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.pill-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 11.5px;
+  color: #e5e7eb;
+  backdrop-filter: blur(10px);
+}
+
+.pill-meta i {
+  color: var(--honey-300);
+  font-size: 11px;
+}
+
+/* ================== Columna derecha: panel de login ================== */
+
+.login-panel {
+  padding: 26px 26px 22px;
+  background: rgba(15, 23, 42, 0.92);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 20px;
   font-weight: 700;
-  color: #1a1a1a;
-}
-.subtitle{
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: var(--black-500);
+  color: #f9fafb;
 }
 
-/* ====== Formulario ====== */
-.form{ margin-top: 8px; }
-
-.field{ margin-bottom: 16px; }
-.label{
-  display:block;
+.panel-head p {
+  margin: 6px 0 14px;
   font-size: 13px;
+  color: #9ca3af;
+}
+
+/* Formulario */
+.form {
+  margin-top: 2px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.label {
+  display: block;
+  font-size: 12.5px;
   font-weight: 600;
-  margin-bottom: 6px;
-  color:#2b2b2b;
+  margin-bottom: 5px;
+  color: #d1d5db;
 }
 
-.input-wrapper{
-  position:relative;
-  display:flex;
-  align-items:center;
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.icon{
-  position:absolute;
-  left:12px;
-  font-size: 14px;
-  color: var(--gray-500);
-  pointer-events:none;
+.icon {
+  position: absolute;
+  left: 11px;
+  font-size: 13px;
+  color: #6b7280;
+  pointer-events: none;
 }
 
-.input{
-  width:100%;
-  border: 1.5px solid #E6E8EC;
+/* Inputs */
+.input {
+  width: 100%;
   border-radius: 12px;
-  padding: 12px 44px 12px 36px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
   font-size: 14px;
-  background-color:#fff; /* sólidos para legibilidad sobre vidrio */
-  transition: border-color .2s, box-shadow .2s;
-}
-.input::placeholder{ color:#9aa0aa; }
-.input:focus{
+  padding: 10px 40px 10px 32px;
   outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.input::placeholder {
+  color: #6b7280;
+}
+
+.input:focus {
   border-color: var(--honey-400);
-  box-shadow: 0 0 0 4px rgba(255, 196, 31, .18);
+  box-shadow: 0 0 0 1px rgba(255, 196, 31, 0.6);
+  background: rgba(15, 23, 42, 0.98);
 }
 
 /* Mostrar/ocultar contraseña */
-.toggle-pass{
-  position:absolute;
-  right:10px;
-  border:none;
-  background:transparent;
-  font-size:14px;
-  color:#757B87;
-  cursor:pointer;
-  padding:6px 8px;
-  border-radius:8px;
+.toggle-pass {
+  position: absolute;
+  right: 8px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 999px;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.toggle-pass:hover{ background:#F5F6F8; }
 
-/* Fila: recuerdame / olvidaste */
-.row-between{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 12px;
-  margin: 8px 0 6px;
+.toggle-pass:hover {
+  background: rgba(148, 163, 184, 0.12);
+  color: #e5e7eb;
 }
-.remember{
-  display:flex; align-items:center; gap:8px;
-  font-size: 13px; color:#2b2b2b;
+
+/* Recuerdame + olvidar */
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0 6px;
 }
-.remember input{ accent-color: var(--honey-500); }
-.link{
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 12.5px;
-  color:#4b4f5c;
-  text-decoration:none;
+  color: #e5e7eb;
 }
-.link:hover{ text-decoration: underline; }
+
+.remember input {
+  accent-color: var(--honey-400);
+}
+
+/* link como boton plano */
+.link-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: 12px;
+  color: #9ca3af;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-btn:hover {
+  color: #e5e7eb;
+}
 
 /* Alertas */
-.alert{
+.alert {
   margin-top: 8px;
-  margin-bottom: 4px;
-  background: #FDE8E8;
-  color: #7F1D1D;
-  border: 1px solid rgba(211,47,47,.25);
+  background: rgba(248, 113, 113, 0.08);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.5);
   padding: 10px 12px;
   border-radius: 12px;
   font-size: 13px;
 }
 
-/* Botón */
-.btn{
-  margin-top: 10px;
-  width:100%;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
+/* Botón principal */
+.btn {
+  margin-top: 12px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   height: 44px;
   border-radius: 999px;
   border: none;
-  background: linear-gradient(180deg, var(--honey-500), #F3A400);
-  color:#111;
+  background: linear-gradient(135deg, var(--honey-500), #f59e0b);
+  color: #111827;
   font-weight: 700;
-  letter-spacing:.2px;
-  cursor:pointer;
-  box-shadow: 0 10px 18px rgba(255,179,0,.25);
-  transition: transform .06s ease, filter .15s ease;
-}
-.btn:hover{ filter: brightness(1.02); }
-.btn:active{ transform: translateY(1px); }
-.btn:disabled{
-  opacity:.75;
-  cursor:not-allowed;
-  filter: saturate(.6);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 16px 30px rgba(255, 179, 0, 0.4);
+  transition: transform 0.08s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
-.btn .btn-text{ font-size:14px; }
-
-/* Spinner minimal */
-.spinner{
-  width:16px; height:16px;
-  border-radius:50%;
-  border: 2px solid rgba(0,0,0,.25);
-  border-top-color: rgba(0,0,0,.7);
-  animation: spin 1s linear infinite;
-}
-@keyframes spin{ to{ transform: rotate(360deg); } }
-
-/* Footer mini */
-.footer{ margin-top: 12px; text-align:center; }
-.mini{ font-size: 11.5px; color:#000000; }
-
-/* Responsive */
-@media (max-width:480px){
-  .login-card{ padding: 22px 18px 14px; }
-  .title{ font-size: 20px; }
-  .subtitle{ font-size: 12.5px; }
+.btn:hover {
+  filter: brightness(1.02);
+  box-shadow: 0 22px 40px rgba(255, 179, 0, 0.45);
+  transform: translateY(-1px);
 }
 
-/* Dark mode (solo ajusta la tarjeta; el fondo queda igual) */
-@media (prefers-color-scheme: dark){
-  :root{
-    --surface:#121212;
-    --ring:#e9e9e9;
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 12px 24px rgba(255, 179, 0, 0.35);
+}
+
+.btn:disabled {
+  opacity: 0.78;
+  cursor: not-allowed;
+  box-shadow: 0 12px 24px rgba(148, 163, 184, 0.3);
+  filter: saturate(0.7);
+}
+
+.btn i {
+  font-size: 14px;
+}
+
+/* Spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(17, 24, 39, 0.4);
+  border-top-color: rgba(17, 24, 39, 1);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
+}
 
-  .login-full{ color:#F5F6F8; }
+/* Footer */
+.footer {
+  margin-top: 14px;
+  text-align: center;
+}
 
-  .login-card{
-    background-color: rgba(20,20,20,0.20);
-    border-color: rgba(255,255,255,0.25);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    backdrop-filter: blur(16px) saturate(140%);
-    box-shadow: 0 16px 32px rgba(0,0,0,0.35);
+.mini {
+  font-size: 11.5px;
+  color: #9ca3af;
+}
+
+/* ================== Responsive ================== */
+
+@media (max-width: 900px) {
+  .login-card {
+    grid-template-columns: minmax(0, 1fr);
   }
-
-  .title{ color:#F5F6F8; }
-  .label{ color:#E5E7EB; }
-  .input{
-    background:#141414; color:#F5F6F8;
-    border-color:#2a2a2a;
+  .login-hero {
+    display: none; /* en móvil dejamos solo el formulario para mayor claridad */
   }
-  .input::placeholder{ color:#8E929A; }
-  .toggle-pass:hover{ background:#1d1d1d; }
-  .link{ color:#C9CDD6; }
-  .mini{ color:#A8ADB7; }
+}
+
+@media (max-width: 640px) {
+  .login-full {
+    padding: 16px;
+  }
+  .login-panel {
+    padding: 22px 18px 18px;
+  }
+}
+
+/* Dark mode preferencia SO: afinamos contraste */
+@media (prefers-color-scheme: dark) {
+  .login-title {
+    color: #f9fafb;
+  }
+  .panel-head p {
+    color: #9ca3af;
+  }
 }
