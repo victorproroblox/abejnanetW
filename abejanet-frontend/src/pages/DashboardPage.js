@@ -1,147 +1,253 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import "./DashboardPage.css";
 import logo from "../assets/abeja_logo.png";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 
-/* ====== ICONOS ====== */
-function BeeIcon(props){ 
+function StatChip({ label, value }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path d="M12 8.5c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4Z" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M6 6l3 3M18 6l-3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M12 4v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M5 13h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M7.5 18.5C9 20 10.5 20.5 12 20.5s3-.5 4.5-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function CloseIcon(props){
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
+    <div className="dash-stat-chip">
+      <span className="dash-stat-label">{label}</span>
+      <span className="dash-stat-value">{value}</span>
+    </div>
   );
 }
 
 function DashboardPage() {
-  const [open, setOpen] = useState(false);
-  const usuario = JSON.parse(localStorage.getItem("usuario"));
-  const location = useLocation();
-
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
   const email = usuario?.correo_electronico || "Invitado";
+  const nombre = usuario?.nombre || "Apicultor";
+
   const initials = useMemo(() => {
-    const base = (email || "").trim();
-    if (!base) return "U";
+    const base = (email || "U").trim();
     return base.slice(0, 2).toUpperCase();
   }, [email]);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const navItems = [
-    { to: "/dashboard", label: "🏠 Inicio" },
-    { to: "/colmenas", label: "🐝 Colmenas" },
-    { to: "/reportes", label: "📄 Reportes" },
-    { to: "/sensores", label: "🛠 Sensores" },
-    { to: "/cuenta", label: "👤 Cuenta" },
+    { to: "/dashboard", label: "Inicio", icon: "🏠" },
+    { to: "/colmenas", label: "Colmenas", icon: "🐝" },
+    { to: "/reportes", label: "Reportes", icon: "📄" },
+    { to: "/sensores", label: "Sensores", icon: "📡" },
+    { to: "/cuenta", label: "Cuenta", icon: "👤" },
   ];
 
-  const closeOnRoute = () => setOpen(false);
+  // Datos simulados para mostrar algo de info
+  const kpis = {
+    colmenasTotales: 3,
+    apiarios: 2,
+    sensoresActivos: 4,
+    alertasHoy: 0,
+  };
 
   return (
-    <div className={`dash-root ${open ? "drawer-open" : ""}`}>
-      {/* Topbar */}
-      <header className="topbar">
-        {/* Botón con abejita -> X */}
-        <button
-          className="icon-btn"
-          aria-label={open ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
+    <div className="dashboard-layout">
+      {/* ==== SIDEBAR ==== */}
+      <aside className="dashboard-sidebar">
+        <div
+          className="dashboard-logo"
+          onClick={() => navigate("/dashboard")}
+          title="Ir al inicio"
         >
-          {open ? <CloseIcon /> : <BeeIcon />}
-        </button>
-
-        <div className="brand">
-          <img src={logo} alt="AbejaNet" />
-          <span className="brand-name">AbejaNet</span>
+          <img src={logo} alt="AbejaNet" className="dashboard-logo-img" />
+          <span className="dashboard-logo-text">AbejaNet</span>
         </div>
 
-        <div className="user-chip" title={email}>
-          <span className="user-initials">{initials}</span>
-          <span className="user-mail">{email}</span>
-        </div>
-      </header>
-
-      {/* Drawer (menú lateral) */}
-      <aside className="drawer" role="navigation" aria-label="Menú principal">
-        <div className="drawer-head">
-          <img src={logo} alt="AbejaNet" />
-          <strong>AbejaNet</strong>
-        </div>
-        <ul className="drawer-links">
-          {navItems.map(({ to, label }) => (
-            <li key={to}>
-              <Link
-                to={to}
-                className={location.pathname === to ? "active" : ""}
-                onClick={closeOnRoute}
-              >
-                {label}
-              </Link>
-            </li>
+        <nav className="dashboard-nav">
+          {navItems.map((item) => (
+            <button
+              key={item.to}
+              className={
+                "dashboard-nav-item" +
+                (location.pathname === item.to
+                  ? " dashboard-nav-item-active"
+                  : "")
+              }
+              onClick={() => navigate(item.to)}
+            >
+              <span className="dashboard-nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
           ))}
-        </ul>
-        <div className="drawer-footer">
-          <small>{email}</small>
+        </nav>
+
+        <div className="dashboard-sidebar-footer" title={email}>
+          <div className="dashboard-user-initials">{initials}</div>
+          <div className="dashboard-user-meta">
+            <span className="dashboard-user-name">{nombre}</span>
+            <span className="dashboard-user-email">{email}</span>
+          </div>
         </div>
       </aside>
 
-      {/* Overlay para cerrar el drawer en mobile */}
-      <button
-        className="overlay"
-        aria-label="Cerrar menú"
-        onClick={() => setOpen(false)}
-      />
-
-      {/* Contenido */}
-      <main className="content">
-        <section className="hero">
-          <div className="hero-card">
-            <h1>Bienvenido 👋</h1>
-            <p>Monitorea tus colmenas con datos claros y alertas oportunas.</p>
+      {/* ==== CONTENIDO PRINCIPAL ==== */}
+      <main className="dashboard-main">
+        <header className="dashboard-header">
+          <div>
+            <p className="dashboard-badge">Panel general</p>
+            <h1>Bienvenido, {nombre.split(" ")[0]} 👋</h1>
+            <p className="dashboard-subtitle">
+              Monitorea el estado de tus apiarios, colmenas y sensores desde un
+              solo lugar.
+            </p>
           </div>
+
+          <div className="dashboard-header-stats">
+            <StatChip label="Colmenas" value={kpis.colmenasTotales} />
+            <StatChip label="Apiarios" value={kpis.apiarios} />
+            <StatChip label="Sensores activos" value={kpis.sensoresActivos} />
+            <StatChip label="Alertas hoy" value={kpis.alertasHoy} />
+          </div>
+        </header>
+
+        {/* Tarjeta hero con CTA */}
+        <section className="dashboard-card dashboard-hero">
+          <div>
+            <h2>Visión rápida de tu sistema 🐝</h2>
+            <p>
+              Revisa qué colmenas están registradas, qué sensores tienes
+              instalados y genera reportes para analizar la producción de tus
+              apiarios.
+            </p>
+            <div className="dashboard-hero-actions">
+              <Link to="/colmenas" className="btn-primario">
+                Ver colmenas
+              </Link>
+              <Link to="/sensores" className="btn-secundario">
+                Gestionar sensores
+              </Link>
+            </div>
+          </div>
+          <ul className="dashboard-hero-list">
+            <li>• Monitoreo remoto 24/7 de tus colmenas.</li>
+            <li>• Centraliza la información de todos tus apiarios.</li>
+            <li>• Detecta cambios bruscos en peso o temperatura.</li>
+          </ul>
         </section>
 
-        <section className="cards-grid">
-          <article className="card">
-            <h4>¿Qué es AbejaNet?</h4>
+        {/* Grid de tarjetas de información */}
+        <section className="dashboard-grid">
+          {/* Columna 1 */}
+          <article className="dashboard-card">
+            <h3>Resumen de tus colmenas</h3>
             <p>
-              AbejaNet es una plataforma inteligente para el monitoreo remoto de colmenas, que ayuda a prevenir pérdidas,
-              mejorar la producción de miel y cuidar a las abejas. Utiliza sensores de peso, movimiento e inteligencia artificial
-              para mantenerte informado en todo momento.
+              Actualmente tienes <strong>{kpis.colmenasTotales}</strong>{" "}
+              colmenas registradas en{" "}
+              <strong>{kpis.apiarios}</strong> apiarios.
             </p>
-          </article>
-
-          <article className="card">
-            <h4>📌 Beneficios del sistema</h4>
-            <ul className="bullets">
-              <li>🕒 Monitoreo 24/7</li>
-              <li>📍 Acceso desde cualquier lugar</li>
-              <li>🚨 Alertas inmediatas</li>
-              <li>📥 Reportes descargables</li>
+            <p>
+              Desde el módulo de{" "}
+              <Link to="/colmenas" className="link-inline">
+                Colmenas
+              </Link>{" "}
+              puedes:
+            </p>
+            <ul className="dashboard-list">
+              <li>Registrar nuevas colmenas y asignarlas a un apiario.</li>
+              <li>Actualizar descripciones y ubicaciones.</li>
+              <li>Consultar el detalle histórico de cada colmena.</li>
             </ul>
           </article>
 
-          <article className="card">
-            <h4>📰 Noticias o Consejos</h4>
+          <article className="dashboard-card">
+            <h3>Estado de sensores</h3>
             <p>
-              – Cómo detectar enjambrazón a tiempo<br />
-              – Qué hacer si una colmena deja de producir<br />
-              – Recomendaciones para mantener tus colmenas seguras
+              Tienes <strong>{kpis.sensoresActivos}</strong> sensores activos
+              reportando datos. Para cada colmena puedes conectar sensores de:
             </p>
-            <h5>🐝 Importancia de las Abejas</h5>
+            <ul className="dashboard-list">
+              <li>⚖️ Peso (control de producción y alimento).</li>
+              <li>🌡️ Temperatura y humedad interna.</li>
+              <li>📦 Movimiento / apertura de tapa.</li>
+            </ul>
+            <p className="dashboard-note">
+              Desde{" "}
+              <Link to="/sensores" className="link-inline">
+                Gestión de Sensores
+              </Link>{" "}
+              puedes ver la lista completa, editar estados y registrar nuevas
+              instalaciones.
+            </p>
+          </article>
+
+          {/* Columna 2 */}
+          <article className="dashboard-card">
+            <h3>Alertas y seguridad</h3>
             <p>
-              Las abejas son responsables de más del 70% de la polinización mundial. Su monitoreo protege el ecosistema
-              y garantiza la producción de alimentos.
+              Las alertas automáticas te ayudan a reaccionar cuando algo se
+              sale de lo normal:
+            </p>
+            <ul className="dashboard-list">
+              <li>🔔 Disminución brusca de peso (posible robo o enjambrazón).</li>
+              <li>🔥 Temperaturas extremas dentro de la colmena.</li>
+              <li>📉 Falta de actividad prolongada en alguna colmena.</li>
+            </ul>
+            <p className="dashboard-note">
+              En futuras versiones podrás configurar umbrales personalizados
+              por apiario y recibir notificaciones en tu celular.
+            </p>
+          </article>
+
+          <article className="dashboard-card">
+            <h3>Reportes y análisis</h3>
+            <p>
+              Desde el módulo de{" "}
+              <Link to="/reportes" className="link-inline">
+                Reportes
+              </Link>{" "}
+              podrás:
+            </p>
+            <ul className="dashboard-list">
+              <li>Descargar reportes en PDF o CSV.</li>
+              <li>Visualizar gráficas por colmena o apiario.</li>
+              <li>Comparar producción entre temporadas.</li>
+            </ul>
+            <p className="dashboard-note">
+              Usa estos reportes para tomar decisiones sobre cambio de
+              ubicación, alimentación o renovación de colmenas.
+            </p>
+          </article>
+
+          {/* Columna 3 */}
+          <article className="dashboard-card dashboard-tips">
+            <h3>Buenas prácticas apícolas</h3>
+            <ul className="dashboard-list">
+              <li>
+                Revisa físicamente tus colmenas al menos{" "}
+                <strong>una vez por semana</strong>.
+              </li>
+              <li>
+                Registra cambios importantes (división, sustitución de reina,
+                tratamientos) en tus notas.
+              </li>
+              <li>
+                Mantén un calendario de floraciones para entender mejor los
+                picos de producción.
+              </li>
+              <li>
+                Usa el historial de peso para decidir cuándo colocar o retirar
+                alzas.
+              </li>
+            </ul>
+          </article>
+
+          <article className="dashboard-card">
+            <h3>Próximos pasos recomendados</h3>
+            <ol className="dashboard-steps">
+              <li>Registra todas tus colmenas activas en el sistema.</li>
+              <li>Asocia al menos un sensor de peso a cada apiario.</li>
+              <li>
+                Configura una rutina semanal de revisión usando los reportes.
+              </li>
+              <li>
+                Documenta cambios importantes en notas o en tu cuaderno de
+                campo.
+              </li>
+            </ol>
+            <p className="dashboard-note">
+              Entre más datos registres, más útil será AbejaNet para entender el
+              comportamiento de tus colmenas.
             </p>
           </article>
         </section>
