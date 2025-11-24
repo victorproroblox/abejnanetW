@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./CreateColmenaPage.css";
+
 export default function CreateColmenaPage() {
   const [apiarios, setApiarios] = useState([]);
   const [form, setForm] = useState({
@@ -40,11 +41,14 @@ export default function CreateColmenaPage() {
 
     try {
       setLoading(true);
-      const res = await fetch("https://abejanet-backend-cplf.onrender.com/api/colmenas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        "https://abejanet-backend-cplf.onrender.com/api/colmenas",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
 
       const data = await res.json();
 
@@ -62,100 +66,122 @@ export default function CreateColmenaPage() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: "0 auto",
-        padding: "24px 16px",
-        color: "var(--text)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 16,
-        }}
-      >
-        <h2 style={{ margin: 0 }}>➕ Crear nueva colmena</h2>
-        <Link to="/colmenas" className="crumb-link">
-          ← Volver a Colmenas
-        </Link>
-      </div>
+    <div className="create-colmena-root">
+      <div className="create-colmena-shell">
+        {/* Encabezado */}
+        <header className="create-colmena-header">
+          <div>
+            <h2>➕ Crear nueva colmena</h2>
+            <p className="create-colmena-sub">
+              Registra una colmena dentro de uno de tus apiarios para comenzar a
+              monitorearla.
+            </p>
+          </div>
+          <Link to="/colmenas" className="crumb-link">
+            ← Volver a colmenas
+          </Link>
+        </header>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          padding: 20,
-          borderRadius: 16,
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.14)",
-          backdropFilter: "blur(6px)",
-        }}
-      >
-        {/* Combo de apiarios */}
-        <label className="form-field">
-          <span>Apiario *</span>
-          <select
-            name="apiario_id"
-            value={form.apiario_id}
-            onChange={handleChange}
-            required
+        <div className="create-colmena-layout">
+          {/* Tarjeta principal del formulario */}
+          <form
+            onSubmit={handleSubmit}
+            className="create-colmena-form-card"
           >
-            <option value="">Selecciona un apiario…</option>
-            {apiarios.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.nombre}
-              </option>
-            ))}
-          </select>
-        </label>
+            {/* Combo de apiarios */}
+            <label className="form-field">
+              <span>Apiario *</span>
+              <select
+                name="apiario_id"
+                value={form.apiario_id}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Selecciona un apiario…</option>
+                {apiarios.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        {/* Nombre */}
-        <label className="form-field">
-          <span>Nombre de la colmena *</span>
-          <input
-            type="text"
-            name="nombre"
-            placeholder="Ej. Colmena Norte 1"
-            value={form.nombre}
-            onChange={handleChange}
-            required
-          />
-        </label>
+            {/* Nombre */}
+            <label className="form-field">
+              <span>Nombre de la colmena *</span>
+              <input
+                type="text"
+                name="nombre"
+                placeholder="Ej. Colmena Norte 1"
+                value={form.nombre}
+                onChange={handleChange}
+                required
+              />
+            </label>
 
-        {/* Descripción */}
-        <label className="form-field">
-          <span>Descripción (opcional)</span>
-          <textarea
-            name="descripcion_especifica"
-            rows="4"
-            placeholder="Detalles o notas de esta colmena..."
-            value={form.descripcion_especifica}
-            onChange={handleChange}
-          />
-        </label>
+            {/* Descripción */}
+            <label className="form-field">
+              <span>Descripción (opcional)</span>
+              <textarea
+                name="descripcion_especifica"
+                rows="4"
+                placeholder="Detalles o notas de esta colmena..."
+                value={form.descripcion_especifica}
+                onChange={handleChange}
+              />
+            </label>
 
-        {/* Mensajes */}
-        {errorMsg && (
-          <div className="alert error">
-            <p>{errorMsg}</p>
-          </div>
-        )}
-        {successMsg && (
-          <div className="alert success">
-            <p>{successMsg}</p>
-          </div>
-        )}
+            {/* Mensajes */}
+            {errorMsg && (
+              <div className="alert error">
+                <p>{errorMsg}</p>
+              </div>
+            )}
+            {successMsg && (
+              <div className="alert success">
+                <p>{successMsg}</p>
+              </div>
+            )}
 
-        {/* Botones */}
-        <div className="form-actions">
-          <button type="submit" disabled={loading}>
-            {loading ? "Creando..." : "Crear colmena"}
-          </button>
+            {/* Botones */}
+            <div className="form-actions">
+              <button type="submit" disabled={loading}>
+                {loading ? "Creando..." : "Crear colmena"}
+              </button>
+            </div>
+          </form>
+
+          {/* Columna derecha con info / tips */}
+          <aside className="create-colmena-aside">
+            <h3>🐝 Buenas prácticas</h3>
+            <ul>
+              <li>
+                Usa nombres que te ayuden a ubicarla rápido
+                <br />
+                <span className="hint">Ejemplo: “Norte 1”, “Sur 3 – Producción”.</span>
+              </li>
+              <li>
+                La descripción es ideal para anotar
+                <br />
+                <span className="hint">
+                  Estado de la reina, recambios, tratamientos recientes, etc.
+                </span>
+              </li>
+              <li>
+                Asegúrate de asignarla al apiario correcto para
+                que los reportes sean más claros.
+              </li>
+            </ul>
+
+            <div className="create-colmena-meta">
+              <p>
+                Cada colmena registrada se conectará con tus sensores para
+                mostrar peso, ambiente y alertas dentro del panel principal.
+              </p>
+            </div>
+          </aside>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
