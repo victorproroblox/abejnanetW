@@ -203,7 +203,7 @@ export default function ReportesPage() {
   // colmenas
   const [colmResumen, setColmResumen] = useState(null);
   const [colmPorApiario, setColmPorApiario] = useState([]);
-  const [colmSinLect, setColmSinLect] = useState([]);
+  const [colmSinLect] = useState([]); // reservado
 
   // apiarios
   const [apiResumen, setApiResumen] = useState(null);
@@ -312,8 +312,8 @@ export default function ReportesPage() {
         "https://abejanet-backend-cplf.onrender.com/api/reportes/colmenas"
       ),
     ]);
-    setApiarios(a);
-    setColmenas(c);
+    setApiarios(Array.isArray(a) ? a : []);
+    setColmenas(Array.isArray(c) ? c : []);
   };
 
   const cargarOperativo = async () => {
@@ -336,9 +336,15 @@ export default function ReportesPage() {
       ).catch(() => []),
     ]);
 
-    setKpis(resumen);
-    setSeriePeso(peso);
-    setSerieAmb(amb);
+    setKpis({
+      activas: resumen.activas ?? 0,
+      promPeso: Number(resumen.promPeso ?? 0),
+      variacion7d: Number(resumen.variacion7d ?? 0),
+      alertas: resumen.alertas ?? 0,
+    });
+
+    setSeriePeso(Array.isArray(peso) ? peso : []);
+    setSerieAmb(Array.isArray(amb) ? amb : []);
     setTopVariacion([]); // puedes llenarlo cuando tengas el endpoint
     setEventos([]);
   };
@@ -360,8 +366,8 @@ export default function ReportesPage() {
       ),
     ]);
     setUsrResumen(r);
-    setUsrCrec(m);
-    setUsrList(l);
+    setUsrCrec(Array.isArray(m) ? m : []);
+    setUsrList(Array.isArray(l) ? l : []);
   };
 
   const cargarColmenasAdmin = async () => {
@@ -374,8 +380,7 @@ export default function ReportesPage() {
       ),
     ]);
     setColmResumen(r);
-    setColmPorApiario(p);
-    setColmSinLect([]);
+    setColmPorApiario(Array.isArray(p) ? p : []);
   };
 
   const cargarApiariosAdmin = async () => {
@@ -392,7 +397,7 @@ export default function ReportesPage() {
       ),
     ]);
     setApiResumen(r);
-    setApiTopAct(t);
+    setApiTopAct(Array.isArray(t) ? t : []);
   };
 
   // init
@@ -431,14 +436,42 @@ export default function ReportesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, filtros.desde, filtros.hasta, filtros.apiarioId, filtros.colmenaId]);
 
-  // agrupar serie de peso por colmena
-  const pesoPorColmena = useMemo(() => {
-    const map = {};
-    for (const r of seriePeso) {
-      map[r.colmena] = map[r.colmena] || [];
-      map[r.colmena].push(r);
+  /* ====== Transformación para gráfico de peso por colmena ======
+     seriePeso viene como: { fecha, colmena, peso }
+     Lo convertimos a:
+     { fecha, Colmena A: 12.3, Colmena B: 10.1, ... }
+  ===============================================================*/
+  const { pesoMultiSeries, colmenasSeries } = useMemo(() => {
+    if (!Array.isArray(seriePeso) || !seriePeso.length) {
+      return { pesoMultiSeries: [], colmenasSeries: [] };
     }
-    return map;
+
+    const byFecha = new Map();
+    const colmenaSet = new Set();
+
+    for (const r of seriePeso) {
+      if (!r) continue;
+      const fecha = r.fecha;
+      if (!byFecha.has(fecha)) {
+        byFecha.set(fecha, { fecha });
+      }
+      const row = byFecha.get(fecha);
+      const nombreColmena = r.colmena || "Colmena";
+      colmenaSet.add(nombreColmena);
+      row[nombreColmena] = Number(r.peso ?? 0);
+    }
+
+    const series = Array.from(byFecha.values()).sort((a, b) => {
+      // si las fechas ya vienen ordenadas tipo string, esto igual ayuda un poco
+      if (a.fecha < b.fecha) return -1;
+      if (a.fecha > b.fecha) return 1;
+      return 0;
+    });
+
+    return {
+      pesoMultiSeries: series,
+      colmenasSeries: Array.from(colmenaSet),
+    };
   }, [seriePeso]);
 
   // acciones por tab
@@ -616,17 +649,13 @@ export default function ReportesPage() {
                       />
                       <KPICard
                         title="Prom. peso"
-                        value={`${
-                          kpis.promPeso?.toFixed?.(1) ?? kpis.promPeso
-                        } kg`}
+                        value={`${kpis.promPeso.toFixed(1)} kg`}
                         subtitle="Peso promedio del rango"
                         icon="⚖️"
                       />
                       <KPICard
                         title="Variación 7 días"
-                        value={`${
-                          kpis.variacion7d?.toFixed?.(1) ?? kpis.variacion7d
-                        } kg`}
+                        value={`${kpis.variacion7d.toFixed(1)} kg`}
                         subtitle="Tendencia de la última semana"
                         icon="📈"
                       />
@@ -648,28 +677,21 @@ export default function ReportesPage() {
                           detectar cambios de peso inusuales.
                         </p>
                         <ResponsiveContainer width="100%" height={320}>
-                          <LineChart>
+                          <LineChart data={pesoMultiSeries}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                              dataKey="fecha"
-                              type="category"
-                              allowDuplicatedCategory={false}
-                            />
+                            <XAxis dataKey="fecha" />
                             <YAxis />
                             <Tooltip />
                             <Legend />
-                            {Object.entries(pesoPorColmena).map(
-                              ([colmena, data]) => (
-                                <Line
-                                  key={colmena}
-                                  data={data}
-                                  dataKey="peso"
-                                  name={colmena}
-                                  type="monotone"
-                                  dot={false}
-                                />
-                              )
-                            )}
+                            {colmenasSeries.map((colmena) => (
+                              <Line
+                                key={colmena}
+                                type="monotone"
+                                dataKey={colmena}
+                                name={colmena}
+                                dot={false}
+                              />
+                            ))}
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
