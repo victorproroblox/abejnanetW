@@ -26,23 +26,13 @@ function DashboardPage() {
   const navigate = useNavigate();
 
   const navItems = [
-<<<<<<< HEAD
     { to: "/dashboard", label: "🏠 Inicio" },
     { to: "/apiarios", label: "🏷️ Apiarios" },
     { to: "/colmenas", label: "🐝 Colmenas" },
     { to: "/reportes", label: "📄 Reportes" },
     { to: "/sensores", label: "🛠 Sensores" },
     { to: "/cuenta", label: "👤 Cuenta" },
-=======
-    { to: "/dashboard", label: "Inicio", icon: "🏠" },
-    { to: "/colmenas", label: "Colmenas", icon: "🐝" },
-    { to: "/reportes", label: "Reportes", icon: "📄" },
-    { to: "/sensores", label: "Sensores", icon: "📡" },
-    { to: "/usuarios", label: "Usuarios", icon: "👥" },
-    { to: "/cuenta", label: "Cuenta", icon: "👤" },
->>>>>>> 07f2e501f58d3abde1f1ff0af3a8993f28d36fd5
   ];
-
   // Datos simulados para mostrar algo de info
   const kpis = {
     colmenasTotales: 3,
