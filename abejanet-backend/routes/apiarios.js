@@ -6,7 +6,7 @@ const pool = require("../db");
 /* ====================================================
    LISTA DE APIARIOS
    GET /apiarios
-   - opcional: ?q=texto  (busca por nombre / ubicación)
+   - opcional: ?q=texto  (busca por nombre / dirección)
 ==================================================== */
 router.get("/apiarios", async (req, res) => {
   try {
@@ -20,11 +20,12 @@ router.get("/apiarios", async (req, res) => {
         SELECT 
           id,
           nombre,
-          ubicacion,
-          descripcion_especifica,
+          direccion_o_coordenadas AS ubicacion,
+          descripcion_general      AS descripcion,
           fecha_creacion
         FROM apiarios
-        WHERE nombre ILIKE $1 OR ubicacion ILIKE $1
+        WHERE nombre ILIKE $1 
+           OR direccion_o_coordenadas ILIKE $1
         ORDER BY id DESC
         `,
         [like]
@@ -35,8 +36,8 @@ router.get("/apiarios", async (req, res) => {
         SELECT 
           id,
           nombre,
-          ubicacion,
-          descripcion_especifica,
+          direccion_o_coordenadas AS ubicacion,
+          descripcion_general      AS descripcion,
           fecha_creacion
         FROM apiarios
         ORDER BY id DESC
@@ -64,8 +65,8 @@ router.get("/apiarios/:id", async (req, res) => {
       SELECT 
         id,
         nombre,
-        ubicacion,
-        descripcion_especifica,
+        direccion_o_coordenadas AS ubicacion,
+        descripcion_general      AS descripcion,
         fecha_creacion
       FROM apiarios
       WHERE id = $1
@@ -89,15 +90,10 @@ router.get("/apiarios/:id", async (req, res) => {
    POST /apiarios
    Body JSON:
    {
-     "nombre": "Apiario Principal",  // requerido (1–100)
-     "ubicacion": "Qro, MX",         // opcional
-     "descripcion": "Texto..."       // opcional
+     "nombre": "Apiario Principal",       // requerido (1–150)
+     "ubicacion": "19.43 N, 99.13 W",     // opcional -> direccion_o_coordenadas
+     "descripcion": "Texto descriptivo"   // opcional -> descripcion_general
    }
-
-   NOTA: en BD asumimos campos:
-   - nombre (UNIQUE, <=100)
-   - ubicacion (TEXT)
-   - descripcion_especifica (TEXT)
 ==================================================== */
 router.post("/apiarios", async (req, res) => {
   try {
@@ -113,9 +109,9 @@ router.post("/apiarios", async (req, res) => {
         .status(400)
         .json({ error: "El campo 'nombre' es obligatorio" });
     }
-    if (typeof nombre !== "string" || nombre.length > 100) {
+    if (typeof nombre !== "string" || nombre.length > 150) {
       return res.status(400).json({
-        error: "El nombre debe ser texto (1–100 caracteres)",
+        error: "El nombre debe ser texto (1–150 caracteres)",
       });
     }
 
@@ -123,14 +119,14 @@ router.post("/apiarios", async (req, res) => {
     try {
       insertResult = await pool.query(
         `
-        INSERT INTO apiarios (nombre, ubicacion, descripcion_especifica)
+        INSERT INTO apiarios (nombre, descripcion_general, direccion_o_coordenadas)
         VALUES ($1, $2, $3)
         RETURNING id
         `,
-        [nombre, ubicacion || null, descripcion || null]
+        [nombre, descripcion || null, ubicacion || null]
       );
     } catch (e) {
-      // 23505 = unique_violation
+      // 23505 = unique_violation (nombre UNIQUE)
       if (e && e.code === "23505") {
         return res
           .status(409)
@@ -146,8 +142,8 @@ router.post("/apiarios", async (req, res) => {
       SELECT 
         id,
         nombre,
-        ubicacion,
-        descripcion_especifica,
+        direccion_o_coordenadas AS ubicacion,
+        descripcion_general      AS descripcion,
         fecha_creacion
       FROM apiarios
       WHERE id = $1
@@ -193,9 +189,9 @@ router.put("/apiarios/:id", async (req, res) => {
 
     // Validar nombre si viene
     if (nombre !== undefined) {
-      if (!nombre || typeof nombre !== "string" || nombre.length > 100) {
+      if (!nombre || typeof nombre !== "string" || nombre.length > 150) {
         return res.status(400).json({
-          error: "El nombre debe ser texto (1–100 caracteres)",
+          error: "El nombre debe ser texto (1–150 caracteres)",
         });
       }
     }
@@ -208,13 +204,13 @@ router.put("/apiarios/:id", async (req, res) => {
       fields.push(`nombre = $${idx++}`);
       params.push(nombre);
     }
-    if (ubicacion !== undefined) {
-      fields.push(`ubicacion = $${idx++}`);
-      params.push(ubicacion || null);
-    }
     if (descripcion !== undefined) {
-      fields.push(`descripcion_especifica = $${idx++}`);
+      fields.push(`descripcion_general = $${idx++}`);
       params.push(descripcion || null);
+    }
+    if (ubicacion !== undefined) {
+      fields.push(`direccion_o_coordenadas = $${idx++}`);
+      params.push(ubicacion || null);
     }
 
     if (fields.length === 0) {
@@ -223,10 +219,9 @@ router.put("/apiarios/:id", async (req, res) => {
         .json({ error: "No se recibió ningún campo para actualizar" });
     }
 
+    // último parámetro: id
     params.push(id);
-    const query = `UPDATE apiarios SET ${fields.join(", ")} WHERE id = $${
-      params.length
-    }`;
+    const query = `UPDATE apiarios SET ${fields.join(", ")} WHERE id = $${params.length}`;
 
     try {
       await pool.query(query, params);
@@ -245,8 +240,8 @@ router.put("/apiarios/:id", async (req, res) => {
       SELECT 
         id,
         nombre,
-        ubicacion,
-        descripcion_especifica,
+        direccion_o_coordenadas AS ubicacion,
+        descripcion_general      AS descripcion,
         fecha_creacion
       FROM apiarios
       WHERE id = $1
