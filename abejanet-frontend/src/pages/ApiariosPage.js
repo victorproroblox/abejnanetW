@@ -1,358 +1,307 @@
-// src/pages/ApiariosPage.js
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import "./DashboardPage.css";   // layout general (topbar, drawer, fondo)
-import "./ApiariosPage.css";    // estilos específicos de apiarios
-import logo from "../assets/abeja_logo.png";
+import { useNavigate } from "react-router-dom";
+import "./ApiariosPage.css"; // Estilos específicos
 
-/* ====== Iconos menú ====== */
-function BeeIcon(props) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      {...props}
-    >
-      <path
-        d="M12 8.5c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M6 6l3 3M18 6l-3 3"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 4v3"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M5 13h14"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M7.5 18.5C9 20 10.5 20.5 12 20.5s3-.5 4.5-2"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function CloseIcon(props) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      {...props}
-    >
-      <path
-        d="M6 6l12 12M18 6L6 18"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-/* ====== Página Apiarios ====== */
 export default function ApiariosPage() {
-  const location = useLocation();
-  const [open, setOpen] = useState(false);
-
-  const usuario = JSON.parse(localStorage.getItem("usuario"));
-  const email = usuario?.correo_electronico || "Invitado";
-  const initials = (email || "U").slice(0, 2).toUpperCase();
-
-  const navItems = [
-    { to: "/dashboard", label: "🏠 Inicio" },
-    { to: "/apiarios", label: "🏷️ Apiarios" },
-    { to: "/colmenas", label: "🐝 Colmenas" },
-    { to: "/sensores", label: "🛠 Sensores" },
-    { to: "/cuenta", label: "👤 Cuenta" },
-    { to: "/usuarios", label: "👤 Usuarios" },
-  ];
-
-  // Datos de apiarios
+  const navigate = useNavigate();
+  
+  // --- ESTADOS ---
   const [apiarios, setApiarios] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [editing, setEditing] = useState(null); // ID del apiario en edición
 
-  // Modal crear/editar
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null); // apiario o null
-  const [form, setForm] = useState({
+  // Filtros
+  const [filtroNombre, setFiltroNombre] = useState("");
+
+  // Formulario (adaptado a tu tabla apiarios)
+  const [formData, setFormData] = useState({
     nombre: "",
-    ubicacion: "",
-    descripcion: "",
+    ubicacion: "",   // Se guardará en 'direccion_o_coordenadas'
+    descripcion: "", // Se guardará en 'descripcion_general'
   });
 
-  // Cargar lista (por ahora solo GET; luego conectamos POST/PUT/DELETE)
+  // --- API URL (Localhost) ---
+  const API_URL = "http://localhost:4000/api/apiarios";
+
+  // --- CARGAR DATOS ---
+  const cargarApiarios = () => {
+    // Construimos query string para filtros
+    const params = new URLSearchParams();
+    if (filtroNombre) params.append("buscar", filtroNombre);
+    const queryString = params.toString();
+
+    setLoading(true);
+    fetch(`${API_URL}?${queryString}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setApiarios(data);
+        } else {
+          setApiarios([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Error al cargar apiarios:", err);
+        setApiarios([]);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  // Efecto para cargar al inicio y cuando cambia el filtro
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        setErrorMsg("");
-        const res = await fetch(
-          "https://abejanet-backend-cplf.onrender.com/api/apiarios"
-        );
-        const data = await res.json();
-        setApiarios(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
-        setErrorMsg("No se pudieron cargar los apiarios.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    cargarApiarios();
+  }, [filtroNombre]);
 
-  const openCreateModal = () => {
-    setEditing(null);
-    setForm({ nombre: "", ubicacion: "", descripcion: "" });
-    setModalOpen(true);
-  };
-
-  const openEditModal = (apiario) => {
-    setEditing(apiario);
-    setForm({
-      nombre: apiario.nombre || "",
-      ubicacion: apiario.ubicacion || "",
-      descripcion: apiario.descripcion || apiario.descripcion_especifica || "",
-    });
-    setModalOpen(true);
-  };
-
-  const handleDeleteLocal = (id) => {
-    if (!window.confirm("¿Eliminar este apiario?")) return;
-    // TODO: aquí después conectamos DELETE al backend
-    setApiarios((prev) => prev.filter((a) => a.id !== id));
-  };
+  // --- HANDLERS ---
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.nombre.trim()) return;
-
-    // TODO: después conectamos POST/PUT al backend.
-    // Por ahora solo actualizamos el estado local para que la UI sea funcional.
-    if (editing) {
-      setApiarios((prev) =>
-        prev.map((a) =>
-          a.id === editing.id ? { ...a, ...form } : a
-        )
-      );
-    } else {
-      const tempId = Date.now();
-      setApiarios((prev) => [...prev, { id: tempId, ...form }]);
-    }
-
-    setModalOpen(false);
+  const resetForm = () => {
+    setFormData({
+      nombre: "",
+      ubicacion: "",
+      descripcion: "",
+    });
     setEditing(null);
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const method = editing ? "PUT" : "POST";
+    const url = editing ? `${API_URL}/${editing}` : API_URL;
+
+    fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Error ${res.status}: No se pudo completar la operación`
+          );
+        }
+        return res.json();
+      })
+      .then(() => {
+        cargarApiarios();
+        resetForm();
+        // alert(editing ? "Apiario actualizado" : "Apiario creado");
+      })
+      .catch((err) => {
+        console.error("Error al guardar apiario:", err.message);
+        alert(err.message);
+      });
+  };
+
+  const handleEdit = (apiario) => {
+    setEditing(apiario.id);
+    setFormData({
+      nombre: apiario.nombre || "",
+      // Mapeamos los nombres de la BD a los del form
+      ubicacion: apiario.direccion_o_coordenadas || "", 
+      descripcion: apiario.descripcion_general || "",
+    });
+    // Scroll arriba para ver el form
+    window.scrollTo(0, 0);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm("¿Seguro que deseas eliminar este apiario?")) {
+      fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+      })
+        .then((res) => res.json())
+        .then(() => cargarApiarios())
+        .catch((err) => console.error("Error al eliminar apiario:", err));
+    }
+  };
+
+  const limpiarFiltros = () => {
+    setFiltroNombre("");
+  };
+
+  // --- RENDER ---
   return (
-    <div className={`dash-root ${open ? "drawer-open" : ""}`}>
-      {/* TOPBAR */}
-      <header className="topbar">
-        <button
-          className="icon-btn"
-          aria-label={open ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-        >
-          {open ? <CloseIcon /> : <BeeIcon />}
-        </button>
-
-        <div className="brand">
-          <img src={logo} alt="AbejaNet" />
-          <span className="brand-name">AbejaNet</span>
+    <div className="apiarios-layout">
+      
+      {/* ==== SIDEBAR MANUAL (Igual a Sensores) ==== */}
+      <aside className="apiarios-sidebar">
+        <div className="apiarios-logo" onClick={() => navigate("/dashboard")}>
+          <span className="apiarios-logo-icon">🐝</span>
+          <span className="apiarios-logo-text">AbejaNet</span>
         </div>
 
-        <div className="user-chip" title={email}>
-          <span className="user-initials">{initials}</span>
-          <span className="user-mail">{email}</span>
-        </div>
-      </header>
+        <nav className="apiarios-nav">
+          <button className="apiarios-nav-item" onClick={() => navigate("/dashboard")}>
+            <span>🏠</span> <span>Inicio</span>
+          </button>
+          
+          {/* Botón activo */}
+          <button className="apiarios-nav-item apiarios-nav-item-active" onClick={() => navigate("/apiarios")}>
+            <span>🏷️</span> <span>Apiarios</span>
+          </button>
 
-      {/* DRAWER */}
-      <aside className="drawer" role="navigation" aria-label="Menú principal">
-        <div className="drawer-head">
-          <img src={logo} alt="AbejaNet" />
-          <strong>AbejaNet</strong>
-        </div>
-        <ul className="drawer-links">
-          {navItems.map(({ to, label }) => (
-            <li key={to}>
-              <Link
-                to={to}
-                className={location.pathname === to ? "active" : ""}
-                onClick={() => setOpen(false)}
-              >
-                {label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <div className="drawer-footer">
-          <small>{email}</small>
-        </div>
+          <button className="apiarios-nav-item" onClick={() => navigate("/colmenas")}>
+            <span>🍯</span> <span>Colmenas</span>
+          </button>
+          <button className="apiarios-nav-item" onClick={() => navigate("/reportes")}>
+            <span>📊</span> <span>Reportes</span>
+          </button>
+          <button className="apiarios-nav-item" onClick={() => navigate("/sensores")}>
+            <span>📡</span> <span>Sensores</span>
+          </button>
+          <button className="apiarios-nav-item" onClick={() => navigate("/usuarios")}>
+            <span>👥</span> <span>Usuarios</span>
+          </button>
+          <button className="apiarios-nav-item" onClick={() => navigate("/cuenta")}>
+            <span>👤</span> <span>Cuenta</span>
+          </button>
+        </nav>
       </aside>
 
-      <button
-        className="overlay"
-        aria-label="Cerrar menú"
-        onClick={() => setOpen(false)}
-      />
+      {/* ==== CONTENIDO PRINCIPAL ==== */}
+      <main className="apiarios-main">
+        
+        <header className="apiarios-header">
+          <div>
+            <p className="apiarios-badge">Gestión de Ubicaciones</p>
+            <h1>Mis Apiarios</h1>
+            <p className="apiarios-subtitle">
+              Registra y administra las ubicaciones de tus colmenas.
+            </p>
+          </div>
+          <div className="apiarios-header-resumen">
+            <span className="apiarios-resumen-pill">
+              Total: <strong>{apiarios.length}</strong>
+            </span>
+          </div>
+        </header>
 
-      {/* CONTENIDO */}
-      <main className="content">
-        <div className="apiarios-page">
-          <div className="apiarios-head">
-            <div>
-              <h1>Apiarios</h1>
-              <p>Gestiona tus apiarios y su ubicación.</p>
-            </div>
-            <button className="apiario-btn-primary" onClick={openCreateModal}>
-              ➕ Nuevo apiario
+        {/* TARJETA DE FILTROS + FORMULARIO */}
+        <section className="apiarios-card">
+          
+          {/* Filtros */}
+          <div className="form-apiario-filtros">
+            <input
+              type="text"
+              name="filtro_nombre"
+              placeholder="Buscar por nombre..."
+              value={filtroNombre}
+              onChange={(e) => setFiltroNombre(e.target.value)}
+            />
+            <button
+              type="button"
+              className="btn-secundario"
+              onClick={limpiarFiltros}
+            >
+              Limpiar filtros
             </button>
           </div>
 
-          {loading && <div className="apiarios-note">Cargando apiarios…</div>}
-          {errorMsg && (
-            <div className="apiarios-alert error">
-              <p>{errorMsg}</p>
-            </div>
-          )}
+          {/* Formulario */}
+          <form className="form-apiario" onSubmit={handleSubmit}>
+            <input
+              type="text"
+              name="nombre"
+              placeholder="Nombre del Apiario"
+              value={formData.nombre}
+              onChange={handleChange}
+              required
+            />
 
-          {!loading && !apiarios.length && !errorMsg && (
-            <div className="apiarios-empty">
-              <h3>No hay apiarios registrados</h3>
-              <p>Comienza agregando tu primer apiario.</p>
-            </div>
-          )}
+            <input
+              type="text"
+              name="ubicacion"
+              placeholder="Ubicación / Coordenadas"
+              value={formData.ubicacion}
+              onChange={handleChange}
+            />
 
-          {!!apiarios.length && (
-            <div className="apiarios-grid">
-              {apiarios.map((a) => (
-                <article key={a.id} className="apiario-card">
-                  <header className="apiario-card-head">
-                    <h3>{a.nombre}</h3>
-                    <span className="apiario-tag">
-                      #{a.id}
-                    </span>
-                  </header>
-                  <p className="apiario-sub">
-                    {a.ubicacion || a.ubicacion_referencial || "Ubicación no especificada"}
-                  </p>
-                  <p className="apiario-desc">
-                    {a.descripcion ||
-                      a.descripcion_especifica ||
-                      "Sin descripción registrada."}
-                  </p>
+            <input
+              type="text"
+              name="descripcion"
+              placeholder="Descripción general"
+              value={formData.descripcion}
+              onChange={handleChange}
+              style={{ flexGrow: 2 }} // Para que ocupe más espacio si hay hueco
+            />
 
-                  <footer className="apiario-card-actions">
-                    <button
-                      type="button"
-                      className="apiario-btn-secondary"
-                      onClick={() => openEditModal(a)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      className="apiario-btn-danger"
-                      onClick={() => handleDeleteLocal(a.id)}
-                    >
-                      Eliminar
-                    </button>
-                  </footer>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
-
-      {/* MODAL CREAR/EDITAR */}
-      {modalOpen && (
-        <>
-          <div
-            className="apiario-modal-backdrop"
-            onClick={() => setModalOpen(false)}
-          />
-          <div className="apiario-modal" role="dialog" aria-modal="true">
-            <h2>{editing ? "Editar apiario" : "Nuevo apiario"}</h2>
-            <form onSubmit={handleSubmit} className="apiario-form">
-              <label>
-                <span>Nombre *</span>
-                <input
-                  name="nombre"
-                  value={form.nombre}
-                  onChange={handleChange}
-                  required
-                  placeholder="Ej. Apiario Principal"
-                />
-              </label>
-
-              <label>
-                <span>Ubicación</span>
-                <input
-                  name="ubicacion"
-                  value={form.ubicacion}
-                  onChange={handleChange}
-                  placeholder="Referencia, localidad, coordenadas…"
-                />
-              </label>
-
-              <label>
-                <span>Descripción</span>
-                <textarea
-                  name="descripcion"
-                  rows={3}
-                  value={form.descripcion}
-                  onChange={handleChange}
-                  placeholder="Notas relevantes de este apiario…"
-                />
-              </label>
-
-              <div className="apiario-form-actions">
+            <div className="form-apiario-actions">
+              <button type="submit" className="btn-primario">
+                {editing ? "Actualizar Apiario" : "Agregar Apiario"}
+              </button>
+              {editing && (
                 <button
                   type="button"
-                  className="apiario-btn-secondary"
-                  onClick={() => setModalOpen(false)}
+                  className="btn-secundario"
+                  onClick={resetForm}
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="apiario-btn-primary"
-                >
-                  {editing ? "Guardar cambios" : "Crear apiario"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </>
-      )}
+              )}
+            </div>
+          </form>
+        </section>
+
+        {/* TABLA DE APIARIOS */}
+        <section className="apiarios-card">
+          {loading ? (
+            <div className="cuenta-loading">Cargando apiarios...</div>
+          ) : apiarios.length === 0 ? (
+            <p className="apiarios-empty">
+              No hay apiarios registrados que coincidan con la búsqueda.
+            </p>
+          ) : (
+            <div className="tabla-wrapper">
+              <table className="tabla-apiarios">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Ubicación</th>
+                    <th>Descripción</th>
+                    <th>Fecha Creación</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {apiarios.map((item) => (
+                    <tr key={item.id}>
+                      <td><strong>{item.nombre}</strong></td>
+                      <td>{item.direccion_o_coordenadas || "—"}</td>
+                      <td>{item.descripcion_general || "—"}</td>
+                      <td>
+                        {item.fecha_creacion
+                          ? new Date(item.fecha_creacion).toLocaleDateString("es-MX")
+                          : "—"}
+                      </td>
+                      <td className="tabla-apiarios-actions">
+                        <button
+                          className="editar"
+                          onClick={() => handleEdit(item)}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="eliminar"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+      </main>
     </div>
   );
 }
