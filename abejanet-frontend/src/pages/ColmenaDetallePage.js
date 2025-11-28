@@ -25,6 +25,9 @@ import {
 } from "react-icons/fa";
 
 import "./ColmenaDetallePage.css";
+import "./DashboardPage.css";      // 👈 layout general (topbar, drawer, fondo, etc.)
+import "./ColmenaDetallePage.css"; // 👈 estilos específicos de esta página
+
 import logo from "../assets/abeja_logo.png";
 
 /* ====== Iconos del menú ====== */
