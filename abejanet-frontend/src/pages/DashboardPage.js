@@ -32,6 +32,7 @@ function DashboardPage() {
     { to: "/reportes", label: "📄 Reportes" },
     { to: "/sensores", label: "🛠 Sensores" },
     { to: "/cuenta", label: "👤 Cuenta" },
+    { to: "/usuarios", label: "👤 Usuarios" },
   ];
   // Datos simulados para mostrar algo de info
   const kpis = {

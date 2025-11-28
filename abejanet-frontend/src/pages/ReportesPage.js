@@ -174,6 +174,7 @@ export default function ReportesPage() {
     { to: "/reportes", label: "📄 Reportes" },
     { to: "/sensores", label: "🛠 Sensores" },
     { to: "/cuenta", label: "👤 Cuenta" },
+    { to: "/usuarios", label: "👤 Usuarios" },
   ];
 
   // pestaña actual
