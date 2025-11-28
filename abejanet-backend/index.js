@@ -29,9 +29,13 @@ app.use("/api", colmenasRoutes);
 const lecturasRoutes = require("./routes/lecturas");
 app.use("/api", lecturasRoutes);
 
-// 👤 Rutas de usuario
+
 const usuariosRoutes = require("./routes/usuarios");
 app.use("/api", usuariosRoutes);
+
+// 👤 CRUD DE USUARIOS
+const crudUsuRoutes = require("./routes/crud_usu");
+app.use("/api", crudUsuRoutes);
 
 // 📡 Rutas de sensores
 const sensoresRoutes = require("./routes/sensores");

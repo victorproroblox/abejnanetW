@@ -8,10 +8,8 @@ import Cuenta from "./pages/cuenta";
 import Sensores from "./pages/Sensores"; 
 import CreateColmenaPage from "./pages/CreateColmenaPage";
 import EditColmenaPage from "./pages/EditColmenaPage";
-
-
-import ReportesPage from "./pages/ReportesPage"; // 👈 Importa tu nueva página de reportes
-
+import ReportesPage from "./pages/ReportesPage"; 
+import Crud_usu from "./pages/Crud_usu";
 
 function App() {
   return (
@@ -20,6 +18,7 @@ function App() {
 
         {/* Rutas principales */}
 
+        
         <Route path="/" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/colmenas" element={<ColmenasPage />} />
@@ -31,8 +30,9 @@ function App() {
         <Route path="/colmenas/editar/:id" element={<EditColmenaPage />} />
 
 
-        {/* 👇 Nueva ruta para el panel de Reportes */}
+
         <Route path="/reportes" element={<ReportesPage />} />
+        <Route path="/usuarios" element={<Crud_usu />} />
 
       </Routes>
     </Router>
@@ -40,7 +40,12 @@ function App() {
 }
 
 
+
+
+
+
 export default App;
+
 
 
 

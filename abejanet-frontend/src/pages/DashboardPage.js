@@ -30,6 +30,7 @@ function DashboardPage() {
     { to: "/colmenas", label: "Colmenas", icon: "🐝" },
     { to: "/reportes", label: "Reportes", icon: "📄" },
     { to: "/sensores", label: "Sensores", icon: "📡" },
+    { to: "/usuarios", label: "Usuarios", icon: "👥" },
     { to: "/cuenta", label: "Cuenta", icon: "👤" },
   ];
 
