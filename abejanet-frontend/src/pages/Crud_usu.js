@@ -172,9 +172,6 @@ export default function Crud_usu() {
           <button className="usuarios-nav-item" onClick={() => navigate("/colmenas")}>
             <span>🍯</span> <span>Colmenas</span>
           </button>
-          <button className="usuarios-nav-item" onClick={() => navigate("/reportes")}>
-            <span>📊</span> <span>Reportes</span>
-          </button>
           <button className="usuarios-nav-item" onClick={() => navigate("/sensores")}>
             <span>📡</span> <span>Sensores</span>
           </button>
