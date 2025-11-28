@@ -25,11 +25,9 @@ function App() {
         <Route path="/sensores" element={<Sensores />} />
         <Route path="/colmenas/crear" element={<CreateColmenaPage />} />
         <Route path="/colmenas/editar/:id" element={<EditColmenaPage />} />
-
         <Route path="/reportes" element={<ReportesPage />} />
         <Route path="/usuarios" element={<Crud_usu />} />
         <Route path="/apiarios" element={<ApiariosPage />} />
-
       </Routes>
     </Router>
   );
