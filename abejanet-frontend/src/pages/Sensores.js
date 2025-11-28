@@ -23,7 +23,7 @@ export default function Sensores() {
     mac_address: "",
   });
 
-  // Cargar sensores (usa filtros)
+  // Cargar sensores
   const cargarSensores = () => {
     const params = new URLSearchParams();
     if (filtroColmena) params.append("colmena", filtroColmena);
@@ -97,8 +97,7 @@ export default function Sensores() {
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
           throw new Error(
-            errorData.error ||
-              `Error ${res.status}: No se pudo completar la operación`
+            errorData.error || `Error ${res.status}: No se pudo completar la operación`
           );
         }
         return res.json();
@@ -145,7 +144,8 @@ export default function Sensores() {
 
   return (
     <div className="sensores-layout">
-      {/* ==== SIDEBAR / MENÚ LATERAL (igual que en Colmenas) ==== */}
+      
+      {/* === SIDEBAR EXACTO IGUAL QUE APIARIOS === */}
       <aside className="sensores-sidebar">
         <div className="sensores-logo" onClick={() => navigate("/dashboard")}>
           <span className="sensores-logo-icon">🐝</span>
@@ -153,54 +153,43 @@ export default function Sensores() {
         </div>
 
         <nav className="sensores-nav">
-          <button
-            className="sensores-nav-item"
-            onClick={() => navigate("/dashboard")}
-          >
-            <span>🏠</span>
-            <span>Inicio</span>
+
+          <button className="sensores-nav-item" onClick={() => navigate("/dashboard")}>
+            <span>🏠</span> <span>Inicio</span>
           </button>
-          <button
-            className="sensores-nav-item"
-            onClick={() => navigate("/colmenas")}
-          >
-            <span>🍯</span>
-            <span>Colmenas</span>
+
+          <button className="sensores-nav-item" onClick={() => navigate("/apiarios")}>
+            <span>🏷️</span> <span>Apiarios</span>
           </button>
-          <button
-            className="sensores-nav-item"
-            onClick={() => navigate("/reportes")}
-          >
-            <span>📊</span>
-            <span>Reportes</span>
+
+          <button className="sensores-nav-item" onClick={() => navigate("/colmenas")}>
+            <span>🍯</span> <span>Colmenas</span>
           </button>
-          <button
-            className="sensores-nav-item sensores-nav-item-active"
-            onClick={() => navigate("/sensores")}
-          >
-            <span>📡</span>
-            <span>Sensores</span>
+
+          <button className="sensores-nav-item sensores-nav-item-active" onClick={() => navigate("/sensores")}>
+            <span>📡</span> <span>Sensores</span>
           </button>
-          <button
-            className="sensores-nav-item"
-            onClick={() => navigate("/cuenta")}
-          >
-            <span>👤</span>
-            <span>Cuenta</span>
+
+          <button className="sensores-nav-item" onClick={() => navigate("/usuarios")}>
+            <span>👥</span> <span>Usuarios</span>
           </button>
+
+          <button className="sensores-nav-item" onClick={() => navigate("/cuenta")}>
+            <span>👤</span> <span>Cuenta</span>
+          </button>
+
         </nav>
       </aside>
 
-      {/* ==== CONTENIDO PRINCIPAL ==== */}
+      {/* === CONTENIDO PRINCIPAL === */}
       <main className="sensores-main">
-        {/* Header estilo Colmenas */}
+
         <header className="sensores-header">
           <div>
             <p className="sensores-badge">Panel de control</p>
             <h1>Gestión de Sensores</h1>
             <p className="sensores-subtitle">
-              Administra los sensores instalados en tus colmenas, su estado y
-              fecha de instalación.
+              Administra los sensores instalados en tus colmenas, su estado y fecha de instalación.
             </p>
           </div>
           <div className="sensores-header-resumen">
@@ -210,9 +199,8 @@ export default function Sensores() {
           </div>
         </header>
 
-        {/* Tarjeta de filtros + formulario */}
+        {/* Filtros + Formulario */}
         <section className="sensores-card">
-          {/* Filtros arriba en barra horizontal */}
           <div className="form-sensor-filtros">
             <select
               name="filtro_colmena"
@@ -235,16 +223,11 @@ export default function Sensores() {
               onChange={(e) => setFiltroMac(e.target.value)}
             />
 
-            <button
-              type="button"
-              className="btn-secundario"
-              onClick={limpiarFiltros}
-            >
+            <button type="button" className="btn-secundario" onClick={limpiarFiltros}>
               Limpiar filtros
             </button>
           </div>
 
-          {/* Formulario como grid */}
           <form className="form-sensor" onSubmit={handleSubmit}>
             <select
               name="colmena_id"
@@ -303,11 +286,7 @@ export default function Sensores() {
                 {editing ? "Actualizar Sensor" : "Agregar Sensor"}
               </button>
               {editing && (
-                <button
-                  type="button"
-                  className="btn-secundario"
-                  onClick={resetForm}
-                >
+                <button type="button" className="btn-secundario" onClick={resetForm}>
                   Cancelar
                 </button>
               )}
@@ -315,14 +294,12 @@ export default function Sensores() {
           </form>
         </section>
 
-        {/* Tabla de sensores en tarjeta aparte */}
+        {/* Tabla */}
         <section className="sensores-card">
           {loading ? (
             <div className="cuenta-loading">Cargando sensores...</div>
           ) : sensores.length === 0 ? (
-            <p className="sensores-empty">
-              No hay sensores que coincidan con los filtros.
-            </p>
+            <p className="sensores-empty">No hay sensores que coincidan con los filtros.</p>
           ) : (
             <div className="tabla-wrapper">
               <table className="tabla-sensores">
@@ -350,29 +327,19 @@ export default function Sensores() {
                       </td>
                       <td>
                         {sensor.fecha_instalacion
-                          ? new Date(
-                              sensor.fecha_instalacion
-                            ).toLocaleDateString("es-MX")
+                          ? new Date(sensor.fecha_instalacion).toLocaleDateString("es-MX")
                           : "Sin fecha"}
                       </td>
                       <td>
                         {sensor.ultima_lectura_en
-                          ? new Date(
-                              sensor.ultima_lectura_en
-                            ).toLocaleDateString("es-MX")
+                          ? new Date(sensor.ultima_lectura_en).toLocaleDateString("es-MX")
                           : "Sin lectura"}
                       </td>
                       <td className="tabla-sensores-actions">
-                        <button
-                          className="editar"
-                          onClick={() => handleEdit(sensor)}
-                        >
+                        <button className="editar" onClick={() => handleEdit(sensor)}>
                           ✏️
                         </button>
-                        <button
-                          className="eliminar"
-                          onClick={() => handleDelete(sensor.id)}
-                        >
+                        <button className="eliminar" onClick={() => handleDelete(sensor.id)}>
                           🗑️
                         </button>
                       </td>
@@ -383,6 +350,7 @@ export default function Sensores() {
             </div>
           )}
         </section>
+
       </main>
     </div>
   );
