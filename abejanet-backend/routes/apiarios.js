@@ -1,20 +1,25 @@
-// backend/routes/apiarios.js
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
+<<<<<<< HEAD
 /* ====================================================
    LISTA DE APIARIOS
    GET /apiarios
    - opcional: ?q=texto  (busca por nombre / dirección)
 ==================================================== */
+=======
+// LISTA DE APIARIOS (para combos, etc.)
+>>>>>>> 07f2e501f58d3abde1f1ff0af3a8993f28d36fd5
 router.get("/apiarios", async (req, res) => {
   try {
+    // Soporta filtro opcional ?q=texto
     const q = (req.query.q || "").trim();
+    let rows;
 
-    let result;
     if (q) {
       const like = `%${q}%`;
+<<<<<<< HEAD
       result = await pool.query(
         `
         SELECT 
@@ -28,9 +33,16 @@ router.get("/apiarios", async (req, res) => {
            OR direccion_o_coordenadas ILIKE $1
         ORDER BY id DESC
         `,
+=======
+      // En Postgres usamos $1 y podemos usar ILIKE para búsqueda case-insensitive
+      const result = await pool.query(
+        "SELECT id, nombre FROM apiarios WHERE nombre ILIKE $1 ORDER BY nombre ASC",
+>>>>>>> 07f2e501f58d3abde1f1ff0af3a8993f28d36fd5
         [like]
       );
+      rows = result.rows;
     } else {
+<<<<<<< HEAD
       result = await pool.query(
         `
         SELECT 
@@ -42,16 +54,22 @@ router.get("/apiarios", async (req, res) => {
         FROM apiarios
         ORDER BY id DESC
         `
+=======
+      const result = await pool.query(
+        "SELECT id, nombre FROM apiarios ORDER BY nombre ASC"
+>>>>>>> 07f2e501f58d3abde1f1ff0af3a8993f28d36fd5
       );
+      rows = result.rows;
     }
 
-    res.json(result.rows);
+    res.json(rows);
   } catch (err) {
     console.error("Error al obtener apiarios:", err.message);
     res.status(500).json({ error: "Error del servidor" });
   }
 });
 
+<<<<<<< HEAD
 /* ====================================================
    OBTENER UN APIARIO POR ID
    GET /apiarios/:id
@@ -299,4 +317,6 @@ router.delete("/apiarios/:id", async (req, res) => {
   }
 });
 
+=======
+>>>>>>> 07f2e501f58d3abde1f1ff0af3a8993f28d36fd5
 module.exports = router;

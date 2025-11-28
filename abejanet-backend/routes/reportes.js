@@ -4,7 +4,7 @@ const router = express.Router();
 const pool = require("../db");
 
 // Helpers
-const rango = (desde, hasta) => [`${desde} 00:00:00`, `${hasta} 23:59:59`];
+const rango = (desde, hasta) => [desde + " 00:00:00", hasta + " 23:59:59"];
 
 /* =========================
    CATÁLOGOS BÁSICOS
@@ -34,65 +34,159 @@ router.get("/colmenas", async (_req, res) => {
 });
 
 /* =========================
-   OPERATIVO (KPIs)
+   OPERATIVO
 ========================= */
-// Versión simplificada y estable para Postgres
+// KPIs
 router.get("/resumen", async (req, res) => {
   try {
-    let { desde, hasta, apiarioId, colmenaId } = req.query;
-
-    // Validación básica
-    if (!desde || !hasta) {
-      return res
-        .status(400)
-        .json({ error: "Parámetros 'desde' y 'hasta' son requeridos" });
-    }
-
+    const { desde, hasta, apiarioId, colmenaId } = req.query;
     const [from, to] = rango(desde, hasta);
 
-    // Filtros dinámicos
+    // Construimos condiciones dinámicas para usar en varias queries
     const conditions = ["1=1"];
-    const values = [];
+    const baseValues = [];
 
     if (apiarioId) {
-      conditions.push(`c.apiario_id = $${values.length + 1}`);
-      values.push(apiarioId);
+      conditions.push(`c.apiario_id = $${baseValues.length + 1}`);
+      baseValues.push(apiarioId);
     }
     if (colmenaId) {
-      conditions.push(`c.id = $${values.length + 1}`);
-      values.push(colmenaId);
+      conditions.push(`c.id = $${baseValues.length + 1}`);
+      baseValues.push(colmenaId);
     }
-
-    const idxFrom = values.length + 1;
-    const idxTo = values.length + 2;
-    values.push(from, to);
 
     const whereClause = " WHERE " + conditions.join(" AND ");
 
-    // 1) Colmenas activas + promedio de peso en el rango
-    const { rows } = await pool.query(
-      `
-      SELECT 
-        COUNT(DISTINCT c.id) AS activas,
-        AVG(l.peso)           AS prom_peso
-      FROM lecturas_ambientales l
-      JOIN sensores s ON s.id = l.sensor_id
-      JOIN colmenas c ON c.id = s.colmena_id
-      ${whereClause}
-      AND l.fecha_registro BETWEEN $${idxFrom} AND $${idxTo}
-      `,
-      values
-    );
+    // 1) Colmenas activas con lecturas en el rango
+    {
+      const values = [...baseValues, from, to];
+      const fechaIdx1 = baseValues.length + 1;
+      const fechaIdx2 = baseValues.length + 2;
 
-    const row = rows[0] || {};
-    const activas = Number(row.activas || 0);
-    const promPeso = Number(row.prom_peso || 0);
+      const activasResult = await pool.query(
+        `
+        SELECT COUNT(DISTINCT c.id) AS n
+        FROM lecturas_ambientales l
+        JOIN sensores s ON s.id = l.sensor_id
+        JOIN colmenas c ON c.id = s.colmena_id
+        ${whereClause}
+        AND l.fecha_registro BETWEEN $${fechaIdx1} AND $${fechaIdx2}
+        `,
+        values
+      );
 
-    // 2) Por ahora dejamos variación y alertas en 0
-    const variacion7d = 0;
-    const alertas = 0;
+      var activas = activasResult.rows[0]?.n || 0;
+    }
 
-    return res.json({
+    // 2) Promedio de peso en el rango
+    {
+      const values = [...baseValues, from, to];
+      const fechaIdx1 = baseValues.length + 1;
+      const fechaIdx2 = baseValues.length + 2;
+
+      const promResult = await pool.query(
+        `
+        SELECT AVG(l.peso) AS prom
+        FROM lecturas_ambientales l
+        JOIN sensores s ON s.id = l.sensor_id
+        JOIN colmenas c ON c.id = s.colmena_id
+        ${whereClause}
+        AND l.fecha_registro BETWEEN $${fechaIdx1} AND $${fechaIdx2}
+        `,
+        values
+      );
+
+      var promPeso = promResult.rows[0]?.prom || 0;
+    }
+
+    // 3) Variación promedio por colmena (último - primero del rango)
+    //    Versión Postgres usando subconsultas
+    {
+      const values = [...baseValues, from, to, from, to];
+      const idxFrom1 = baseValues.length + 1;
+      const idxTo1 = baseValues.length + 2;
+      const idxFrom2 = baseValues.length + 3;
+      const idxTo2 = baseValues.length + 4;
+
+      const varResult = await pool.query(
+        `
+        SELECT AVG(last_p - first_p) AS variacion
+        FROM (
+          SELECT
+            c.id AS colmena_id,
+            -- primer peso en el rango
+            (
+              SELECT l1.peso
+              FROM lecturas_ambientales l1
+              JOIN sensores s1 ON s1.id = l1.sensor_id
+              WHERE s1.colmena_id = c.id
+                AND l1.fecha_registro BETWEEN $${idxFrom1} AND $${idxTo1}
+              ORDER BY l1.fecha_registro ASC
+              LIMIT 1
+            ) AS first_p,
+            -- último peso en el rango
+            (
+              SELECT l2.peso
+              FROM lecturas_ambientales l2
+              JOIN sensores s2 ON s2.id = l2.sensor_id
+              WHERE s2.colmena_id = c.id
+                AND l2.fecha_registro BETWEEN $${idxFrom2} AND $${idxTo2}
+              ORDER BY l2.fecha_registro DESC
+              LIMIT 1
+            ) AS last_p
+          FROM colmenas c
+          -- solo consideramos colmenas que tengan lecturas en el rango y cumplan filtros
+          WHERE EXISTS (
+            SELECT 1
+            FROM lecturas_ambientales l3
+            JOIN sensores s3 ON s3.id = l3.sensor_id
+            JOIN colmenas c3 ON c3.id = s3.colmena_id
+            ${whereClause.replace("1=1", "c3.id = c.id")}
+            AND l3.fecha_registro BETWEEN $${idxFrom1} AND $${idxTo1}
+          )
+        ) t
+        WHERE first_p IS NOT NULL AND last_p IS NOT NULL
+        `,
+        values
+      );
+
+      var variacion7d = varResult.rows[0]?.variacion || 0;
+    }
+
+    // 4) Alertas por caída brusca (≤ -1.5 kg) entre lecturas consecutivas
+    {
+      const values = [...baseValues, from, to];
+      const idxFrom = baseValues.length + 1;
+      const idxTo = baseValues.length + 2;
+
+      const alertasResult = await pool.query(
+        `
+        SELECT COUNT(*) AS n
+        FROM (
+          SELECT (l2.peso - l1.peso) AS delta
+          FROM lecturas_ambientales l1
+          JOIN sensores s1 ON s1.id = l1.sensor_id
+          JOIN colmenas c ON c.id = s1.colmena_id
+          JOIN lecturas_ambientales l2
+            ON l2.sensor_id = s1.id
+           AND l2.fecha_registro = (
+                SELECT MIN(l3.fecha_registro)
+                FROM lecturas_ambientales l3
+                WHERE l3.sensor_id = s1.id
+                  AND l3.fecha_registro > l1.fecha_registro
+              )
+          ${whereClause}
+          AND l1.fecha_registro BETWEEN $${idxFrom} AND $${idxTo}
+        ) x
+        WHERE delta <= -1.5
+        `,
+        values
+      );
+
+      var alertas = alertasResult.rows[0]?.n || 0;
+    }
+
+    res.json({
       activas,
       promPeso,
       variacion7d,
@@ -100,7 +194,7 @@ router.get("/resumen", async (req, res) => {
     });
   } catch (e) {
     console.error("Error KPIs /resumen:", e);
-    return res.status(500).json({ error: e.message });
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -201,25 +295,21 @@ router.get("/serie-ambiente", async (req, res) => {
 /* =========================
    ADMIN: USUARIOS
 ========================= */
-// Resumen
+// ✅ Versión Postgres
 router.get("/usuarios/resumen", async (req, res) => {
   try {
     const { desde, hasta } = req.query;
-    const [from, to] = rango(desde, hasta); // si quieres luego usar el rango
+    const [from, to] = rango(desde, hasta); // lo sigues usando si quieres el rango
 
-    const {
-      rows: [tot],
-    } = await pool.query("SELECT COUNT(*) AS total FROM usuarios");
+    const { rows: [tot] } = await pool.query(
+      "SELECT COUNT(*) AS total FROM usuarios"
+    );
 
-    const {
-      rows: [act],
-    } = await pool.query(
+    const { rows: [act] } = await pool.query(
       "SELECT COUNT(*) AS activos FROM usuarios WHERE esta_activo = true"
     );
 
-    const {
-      rows: [inact],
-    } = await pool.query(
+    const { rows: [inact] } = await pool.query(
       "SELECT COUNT(*) AS inactivos FROM usuarios WHERE esta_activo = false"
     );
 
@@ -242,6 +332,7 @@ router.get("/usuarios/resumen", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
 
 // Altas por mes (en rango)
 router.get("/usuarios/crecimiento", async (req, res) => {

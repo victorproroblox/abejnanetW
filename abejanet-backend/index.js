@@ -29,9 +29,13 @@ app.use("/api", colmenasRoutes);
 const lecturasRoutes = require("./routes/lecturas");
 app.use("/api", lecturasRoutes);
 
-// 👤 Rutas de usuario
+
 const usuariosRoutes = require("./routes/usuarios");
 app.use("/api", usuariosRoutes);
+
+// 👤 CRUD DE USUARIOS
+const crudUsuRoutes = require("./routes/crud_usu");
+app.use("/api", crudUsuRoutes);
 
 // 📡 Rutas de sensores
 const sensoresRoutes = require("./routes/sensores");
@@ -44,11 +48,6 @@ app.use("/api", apiariosRoutes);
 // 📊 Rutas de reportes
 const reportesRouter = require("./routes/reportes");
 app.use("/api/reportes", reportesRouter);
-
-// Rutas de apiarios
-const apiariosRouter = require("./routes/apiarios");
-app.use("/api", apiariosRouter);
-
 
 // ✅ Iniciar servidor
 const PORT = process.env.PORT || 4000;
