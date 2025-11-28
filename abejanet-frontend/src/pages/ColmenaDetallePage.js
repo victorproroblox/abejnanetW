@@ -24,10 +24,8 @@ import {
   FaCloudRain,
 } from "react-icons/fa";
 
-import "./ColmenaDetallePage.css";
-import "./DashboardPage.css";      // 👈 layout general (topbar, drawer, fondo, etc.)
-import "./ColmenaDetallePage.css"; // 👈 estilos específicos de esta página
-
+import "./DashboardPage.css";       // 👈 layout global (topbar, drawer, fondo)
+import "./ColmenaDetallePage.css";  // 👈 estilos específicos de esta página
 import logo from "../assets/abeja_logo.png";
 
 /* ====== Iconos del menú ====== */
@@ -237,7 +235,8 @@ export default function ColmenaDetallePage() {
 
         const lecturasProcesadas = (res.data.lecturas || []).map((l) => ({
           fecha: new Date(l.fecha_registro).getTime(),
-          temperatura: l.temperatura != null ? parseFloat(l.temperatura) : null,
+          temperatura:
+            l.temperatura != null ? parseFloat(l.temperatura) : null,
           humedad: l.humedad != null ? parseFloat(l.humedad) : null,
           peso: l.peso != null ? parseFloat(l.peso) : null,
           lluvia: l.lluvia ?? null,
@@ -285,11 +284,12 @@ export default function ColmenaDetallePage() {
 
   return (
     <div className={`dash-root ${open ? "drawer-open" : ""}`}>
-      {/* TOPBAR */}
+      {/* ====== TOPBAR ====== */}
       <header className="topbar">
         <button
           className="icon-btn"
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={open}
           onClick={() => setOpen(!open)}
         >
           {open ? <CloseIcon /> : <BeeIcon />}
@@ -304,7 +304,7 @@ export default function ColmenaDetallePage() {
         </div>
       </header>
 
-      {/* DRAWER */}
+      {/* ====== DRAWER ====== */}
       <aside className="drawer" role="navigation" aria-label="Menú principal">
         <div className="drawer-head">
           <img src={logo} alt="AbejaNet" />
@@ -334,10 +334,10 @@ export default function ColmenaDetallePage() {
         onClick={() => setOpen(false)}
       />
 
-      {/* CONTENIDO */}
+      {/* ====== CONTENIDO ====== */}
       <main className="content">
         <div className="detalle-colmena-page">
-          {/* Encabezado / migas */}
+          {/* Breadcrumb / encabezado */}
           <div className="page-head">
             <div className="crumbs">
               <Link to="/colmenas" className="crumb-link">
@@ -348,11 +348,13 @@ export default function ColmenaDetallePage() {
               )}
             </div>
             {colmena?.apiario && (
-              <span className="badge-apiario-head">📍 {colmena.apiario}</span>
+              <span className="badge-apiario-head">
+                📍 {colmena.apiario}
+              </span>
             )}
           </div>
 
-          {/* Chips info colmena/apiario */}
+          {/* Chips info */}
           <div className="info-grid">
             <InfoChip
               icon={<FaBalanceScale />}
@@ -366,8 +368,8 @@ export default function ColmenaDetallePage() {
             />
           </div>
 
-          {/* Bloque principal: KPI + gráficas */}
-          <section className="reading-slab">
+          {/* SLAB: KPI + GRÁFICAS */}
+          <div className="reading-slab">
             <KpiCard
               peso={pesoActual}
               delta={variacion}
@@ -462,15 +464,14 @@ export default function ColmenaDetallePage() {
                 )}
               </Panel>
             </div>
-          </section>
+          </div>
 
           {loading && <div className="loading-note">Cargando datos…</div>}
           {fail && (
             <div className="empty-box error" style={{ marginTop: 12 }}>
               <h4>Ocurrió un problema</h4>
               <p>
-                Verifica la API:{" "}
-                <code>GET /api/colmenas/{id}/detalle</code>
+                Verifica la API: <code>GET /api/colmenas/{id}/detalle</code>
               </p>
             </div>
           )}
