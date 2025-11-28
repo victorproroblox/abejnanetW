@@ -3,14 +3,13 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ColmenasPage from "./pages/ColmenasPage";
 import ColmenaDetallePage from "./pages/ColmenaDetallePage";
-
 import Cuenta from "./pages/cuenta";
 import Sensores from "./pages/Sensores"; 
 import CreateColmenaPage from "./pages/CreateColmenaPage";
 import EditColmenaPage from "./pages/EditColmenaPage";
+import ReportesPage from "./pages/ReportesPage";
+import ApiariosPage from "./pages/ApiariosPage";
 
-
-import ReportesPage from "./pages/ReportesPage"; // 👈 Importa tu nueva página de reportes
 
 
 function App() {
@@ -24,15 +23,12 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/colmenas" element={<ColmenasPage />} />
         <Route path="/colmena/:id" element={<ColmenaDetallePage />} />
-
         <Route path="/cuenta" element={<Cuenta />} /> 
         <Route path="/sensores" element={<Sensores />} />
         <Route path="/colmenas/crear" element={<CreateColmenaPage />} />
         <Route path="/colmenas/editar/:id" element={<EditColmenaPage />} />
-
-
-        {/* 👇 Nueva ruta para el panel de Reportes */}
         <Route path="/reportes" element={<ReportesPage />} />
+        <Route path="/apiarios" element={<ApiariosPage />} />
 
       </Routes>
     </Router>

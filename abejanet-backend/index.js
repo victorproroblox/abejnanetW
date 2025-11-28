@@ -45,6 +45,11 @@ app.use("/api", apiariosRoutes);
 const reportesRouter = require("./routes/reportes");
 app.use("/api/reportes", reportesRouter);
 
+// Rutas de apiarios
+const apiariosRouter = require("./routes/apiarios");
+app.use("/api", apiariosRouter);
+
+
 // ✅ Iniciar servidor
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
