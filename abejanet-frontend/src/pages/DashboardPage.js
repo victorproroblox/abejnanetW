@@ -26,11 +26,12 @@ function DashboardPage() {
   const navigate = useNavigate();
 
   const navItems = [
-    { to: "/dashboard", label: "Inicio", icon: "🏠" },
-    { to: "/colmenas", label: "Colmenas", icon: "🐝" },
-    { to: "/reportes", label: "Reportes", icon: "📄" },
-    { to: "/sensores", label: "Sensores", icon: "📡" },
-    { to: "/cuenta", label: "Cuenta", icon: "👤" },
+    { to: "/dashboard", label: "🏠 Inicio" },
+    { to: "/apiarios", label: "🏷️ Apiarios" },
+    { to: "/colmenas", label: "🐝 Colmenas" },
+    { to: "/reportes", label: "📄 Reportes" },
+    { to: "/sensores", label: "🛠 Sensores" },
+    { to: "/cuenta", label: "👤 Cuenta" },
   ];
 
   // Datos simulados para mostrar algo de info
