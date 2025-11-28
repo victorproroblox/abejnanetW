@@ -111,9 +111,7 @@ function MiniKpi({ icon, label, value, unit }) {
       <div className="mini-data">
         <span className="mini-label">{label}</span>
         <span className="mini-value">
-          {typeof value === "number"
-            ? `${value.toFixed(1)}${unit}`
-            : "—"}
+          {typeof value === "number" ? `${value.toFixed(1)}${unit}` : "—"}
         </span>
       </div>
     </div>
@@ -216,7 +214,7 @@ export default function ColmenaDetallePage() {
   const initials = (email || "U").slice(0, 2).toUpperCase();
 
   const navItems = [
-    { to: "/", label: "🏠 Inicio" },
+    { to: "/dashboard", label: "🏠 Inicio" },
     { to: "/colmenas", label: "🐝 Colmenas" },
     { to: "/reportes", label: "📄 Reportes" },
     { to: "/sensores", label: "🛠 Sensores" },
@@ -228,14 +226,15 @@ export default function ColmenaDetallePage() {
     setFail(false);
 
     axios
-      .get(`https://abejanet-backend-cplf.onrender.com/api/colmenas/${id}/detalle`)
+      .get(
+        `https://abejanet-backend-cplf.onrender.com/api/colmenas/${id}/detalle`
+      )
       .then((res) => {
         setColmena(res.data.colmena);
 
         const lecturasProcesadas = (res.data.lecturas || []).map((l) => ({
           fecha: new Date(l.fecha_registro).getTime(),
-          temperatura:
-            l.temperatura != null ? parseFloat(l.temperatura) : null,
+          temperatura: l.temperatura != null ? parseFloat(l.temperatura) : null,
           humedad: l.humedad != null ? parseFloat(l.humedad) : null,
           peso: l.peso != null ? parseFloat(l.peso) : null,
           lluvia: l.lluvia ?? null,
@@ -283,9 +282,13 @@ export default function ColmenaDetallePage() {
 
   return (
     <div className={`dash-root ${open ? "drawer-open" : ""}`}>
-      {/* ====== TOPBAR ====== */}
+      {/* TOPBAR */}
       <header className="topbar">
-        <button className="icon-btn" onClick={() => setOpen(!open)}>
+        <button
+          className="icon-btn"
+          aria-label={open ? "Cerrar menú" : "Abrir menú"}
+          onClick={() => setOpen(!open)}
+        >
           {open ? <CloseIcon /> : <BeeIcon />}
         </button>
         <div className="brand">
@@ -298,7 +301,7 @@ export default function ColmenaDetallePage() {
         </div>
       </header>
 
-      {/* ====== DRAWER ====== */}
+      {/* DRAWER */}
       <aside className="drawer" role="navigation" aria-label="Menú principal">
         <div className="drawer-head">
           <img src={logo} alt="AbejaNet" />
@@ -322,12 +325,16 @@ export default function ColmenaDetallePage() {
         </div>
       </aside>
 
-      <button className="overlay" onClick={() => setOpen(false)} />
+      <button
+        className="overlay"
+        aria-label="Cerrar menú"
+        onClick={() => setOpen(false)}
+      />
 
-      {/* ====== CONTENIDO ====== */}
+      {/* CONTENIDO */}
       <main className="content">
         <div className="detalle-colmena-page">
-          {/* Breadcrumb / encabezado */}
+          {/* Encabezado / migas */}
           <div className="page-head">
             <div className="crumbs">
               <Link to="/colmenas" className="crumb-link">
@@ -338,13 +345,11 @@ export default function ColmenaDetallePage() {
               )}
             </div>
             {colmena?.apiario && (
-              <span className="badge-apiario-head">
-                📍 {colmena.apiario}
-              </span>
+              <span className="badge-apiario-head">📍 {colmena.apiario}</span>
             )}
           </div>
 
-          {/* Chips info */}
+          {/* Chips info colmena/apiario */}
           <div className="info-grid">
             <InfoChip
               icon={<FaBalanceScale />}
@@ -358,8 +363,8 @@ export default function ColmenaDetallePage() {
             />
           </div>
 
-          {/* SLAB: KPI + GRÁFICAS */}
-          <div className="reading-slab">
+          {/* Bloque principal: KPI + gráficas */}
+          <section className="reading-slab">
             <KpiCard
               peso={pesoActual}
               delta={variacion}
@@ -387,7 +392,6 @@ export default function ColmenaDetallePage() {
                       <Line
                         type="monotone"
                         dataKey="temperatura"
-                        stroke="#8ea6ff"
                         name="Temperatura (°C)"
                         dot={false}
                         strokeWidth={2}
@@ -416,7 +420,6 @@ export default function ColmenaDetallePage() {
                       <Line
                         type="monotone"
                         dataKey="humedad"
-                        stroke="#79d6b3"
                         name="Humedad (%)"
                         dot={false}
                         strokeWidth={2}
@@ -445,7 +448,6 @@ export default function ColmenaDetallePage() {
                       <Line
                         type="monotone"
                         dataKey="peso"
-                        stroke="#ffc658"
                         name="Peso (kg)"
                         dot={false}
                         strokeWidth={2}
@@ -457,14 +459,15 @@ export default function ColmenaDetallePage() {
                 )}
               </Panel>
             </div>
-          </div>
+          </section>
 
           {loading && <div className="loading-note">Cargando datos…</div>}
           {fail && (
             <div className="empty-box error" style={{ marginTop: 12 }}>
               <h4>Ocurrió un problema</h4>
               <p>
-                Verifica la API: <code>GET /api/colmenas/{id}/detalle</code>
+                Verifica la API:{" "}
+                <code>GET /api/colmenas/{id}/detalle</code>
               </p>
             </div>
           )}
