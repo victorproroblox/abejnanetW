@@ -1,30 +1,44 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 const pool = require("../db");
 require("dotenv").config();
 
+/**
+ * POST /api/auth/login
+ * body: { correo_electronico, contrasena }
+ */
 router.post("/login", async (req, res) => {
-  const { correo_electronico, contrasena } = req.body;
+  const { correo_electronico, contrasena } = req.body || {};
+
+  // Validaciones básicas
+  if (!correo_electronico || !contrasena) {
+    return res
+      .status(400)
+      .json({ mensaje: "correo_electronico y contrasena son requeridos" });
+  }
 
   try {
-    // En Postgres usamos $1 como placeholder
-    // Opción 1 (si esta_activo es BOOLEAN):
-    // const result = await pool.query(
-    //   "SELECT * FROM usuarios WHERE correo_electronico = $1 AND esta_activo = true",
-    //   [correo_electronico]
-    // );
-
-    // Opción 2 (si esta_activo es INT 0/1, similar a MySQL):
-    // routes/auth.js (o donde tengas el login)
+    // Buscar usuario activo por correo
     const result = await pool.query(
-      "SELECT * FROM usuarios WHERE correo_electronico = $1 AND esta_activo = true",
+      `
+      SELECT
+        id,
+        nombre,
+        apellido_paterno,
+        correo_electronico,
+        contrasena,
+        esta_activo,
+        rol_id
+      FROM usuarios
+      WHERE correo_electronico = $1
+        AND esta_activo = true
+      LIMIT 1
+      `,
       [correo_electronico]
     );
 
-
-    const rows = result.rows;
+    const rows = result.rows || [];
 
     if (rows.length === 0) {
       return res
@@ -34,26 +48,31 @@ router.post("/login", async (req, res) => {
 
     const usuario = rows[0];
 
-    // Para esta demo, la contraseña NO está encriptada
-    // (más adelante puedes cambiar esto a bcrypt.compare)
+    // ⚠️ Comparación simple (sin hash, como lo tienes ahora)
     const passwordValida = contrasena === usuario.contrasena;
 
     if (!passwordValida) {
       return res.status(401).json({ mensaje: "Contraseña incorrecta" });
     }
 
+    // Generar JWT
     const token = jwt.sign(
-      { id: usuario.id, rol_id: usuario.rol_id },
-      process.env.JWT_SECRET,
+      {
+        id: usuario.id,
+        rol_id: usuario.rol_id,
+        correo_electronico: usuario.correo_electronico,
+      },
+      process.env.JWT_SECRET || "super_secret",
       { expiresIn: "4h" }
     );
 
+    // No mandamos la contraseña al frontend
     delete usuario.contrasena;
 
-    res.json({ token, usuario });
+    return res.json({ token, usuario });
   } catch (error) {
     console.error("Error al iniciar sesión:", error);
-    res.status(500).json({ mensaje: "Error interno del servidor" });
+    return res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 });
 
