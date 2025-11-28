@@ -6,8 +6,7 @@ import ColmenaDetallePage from "./pages/ColmenaDetallePage";
 import Cuenta from "./pages/cuenta";
 import Sensores from "./pages/Sensores"; 
 import CreateColmenaPage from "./pages/CreateColmenaPage";
-import EditColmenaPage from "./pages/EditColmenaPage";
-import ReportesPage from "./pages/ReportesPage"; 
+import EditColmenaPage from "./pages/EditColmenaPage"; 
 import Crud_usu from "./pages/Crud_usu";
 import ApiariosPage from "./pages/ApiariosPage";
 
@@ -25,7 +24,6 @@ function App() {
         <Route path="/sensores" element={<Sensores />} />
         <Route path="/colmenas/crear" element={<CreateColmenaPage />} />
         <Route path="/colmenas/editar/:id" element={<EditColmenaPage />} />
-        <Route path="/reportes" element={<ReportesPage />} />
         <Route path="/usuarios" element={<Crud_usu />} />
         <Route path="/apiarios" element={<ApiariosPage />} />
       </Routes>

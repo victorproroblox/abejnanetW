@@ -81,9 +81,9 @@ export default function ApiariosPage() {
     { to: "/dashboard", label: "🏠 Inicio" },
     { to: "/apiarios", label: "🏷️ Apiarios" },
     { to: "/colmenas", label: "🐝 Colmenas" },
-    { to: "/reportes", label: "📄 Reportes" },
     { to: "/sensores", label: "🛠 Sensores" },
     { to: "/cuenta", label: "👤 Cuenta" },
+    { to: "/usuarios", label: "👤 Usuarios" },
   ];
 
   // Datos de apiarios
